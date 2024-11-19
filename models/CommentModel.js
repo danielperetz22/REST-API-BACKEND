@@ -19,3 +19,7 @@ const commentSchema = new mongoose.Schema({
 const Comment = mongoose.model('Comment', commentSchema);
 
 module.exports = mongoose.model('Comment', commentSchema);
+
+
+
+const yphai = 8;
