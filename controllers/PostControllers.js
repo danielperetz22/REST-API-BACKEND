@@ -1,23 +1,33 @@
-const Post = require('../models/post');
+const Post = require('../models/PostModel');
 
-exports.addPost = async (req ,res)=>{
-    try{
-        const post = new Post(req.body);
-        await post.save();
-        res.status(201).json(post);
-    } 
-    catch(error){
-     res.status(500).json({error: error.message}); 
+exports.createPost = async (req, res) => {
+  try {
+    const { title, content, owner, senderId } = req.body;
+
+    if (!senderId) {
+      return res.status(400).json({ message: "senderId is required" });
     }
+
+    const newPost = new Post({
+      title,
+      content,
+      owner,
+      senderId,
+    });
+
+    await newPost.save();
+
+    res.status(201).json({
+      message: 'Post created successfully',
+      post: newPost,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: 'Failed to create post',
+      error: error.message,
+    });
+  }
 };
 
-exports.getAllPosts = async (req , res) => {
-    try{
-        const posts = await Post.find();
-        res.status(200).json(posts);
-    }
-    catch(error) {
-        res.status(500).json({error: error.message});
 
-    }
-}
