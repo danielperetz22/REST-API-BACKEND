@@ -22,4 +22,3 @@ module.exports = mongoose.model('Comment', commentSchema);
 
 
 
-const yphai = 8;

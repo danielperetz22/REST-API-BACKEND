@@ -1,0 +1,30 @@
+### Add a New Post
+POST http://localhost:3000/post
+Content-Type: application/json
+
+{
+    "title": "My First Post",
+    "content": "This is the content of my first post",
+    "owner": "Hila",
+    "senderId": "12345"
+}
+
+
+### Add a New Post
+POST http://localhost:3000/post
+Content-Type: application/json
+
+{
+    "title": "My Second Post",
+    "content": "This is the content of my 2nd post",
+    "owner": "Daniel",
+    "senderId": "56789"
+}
+
+
+### Get All Posts
+GET http://localhost:3000/post
+
+
+### Get Posts by Sender
+GET http://localhost:3000/post?senderId=12345

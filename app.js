@@ -2,10 +2,11 @@ const express = require('express');
 const app = express();
 const dotenv = require("dotenv").config();
 const mongoose = require('mongoose');
-
+const postRoutes = require('./routes/PostsRoutes');
 const port = process.env.PORT;
 
 app.use(express.json());
+app.use('/post', postRoutes);
 
 mongoose.connect('mongodb://localhost:27017/mydb',)
   .then(() => {

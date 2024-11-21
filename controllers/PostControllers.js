@@ -1,29 +1,59 @@
 const Post = require('../models/PostModel');
 
-exports.addPost = async (req ,res)=>{
-    try{
-        const post = new Post(req.body);
-        await post.save();
-        res.status(201).json(post);
-    } 
-    catch(error){
-     res.status(500).json({error: error.message}); 
+exports.addPost = async (req, res) => {
+    const { title, content, senderId } = req.body; // get title, content, and senderId from request body 
+
+    if (!title || !content || !senderId) {  // if any of the required fields are missing
+        return res.status(400).json({
+            message: 'Missing required fields: title, content, and senderId are required'
+        });
+    }
+
+    try {
+        const post = new Post(req.body); // create a new post object
+        await post.save(); // save the post to the database
+
+        return res.status(201).json({ 
+            message: 'Post added successfully',
+            post: post
+        });
+    } catch (error) {
+        console.error('Error adding post:', error.message);
+
+        return res.status(500).json({
+            message: 'An error occurred while adding the post',
+            error: error.message
+        });
     }
 };
 
 exports.getAllPosts = async (req , res) => {
-    try{
-        const posts = await Post.find();
-        res.status(200).json(posts);
+    try{ 
+        const posts = await Post.find(); // fetch all posts from the database
+        return res.status(200).json({
+            message: 'Posts fetched successfully',
+            posts: posts
+        });
     }
-    catch(error) {
-        res.status(500).json({error: error.message});
+    catch(error){ // if an error occurs while fetching the posts
+        console.error('Error fetching posts:', error.message);
 
-    }
+        return res.status(500).json({
+            message: 'An error occurred while fetching the posts',
+            error: error.message
+        });
+    } 
 }
 
 exports.getPostById = async (req, res) => {
     const postId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(postId)) { // if the post ID is not a valid MongoDB ObjectID
+        return res.status(400).json({
+            message: 'Invalid post ID format'
+        });
+    }
+
     try {
         const post = await Post.findById(postId);
 
@@ -46,3 +76,37 @@ exports.getPostById = async (req, res) => {
         });
     }
 };
+
+
+exports.getPostsBySender = async (req, res) => {
+    const senderId = req.query.senderId; // get senderId from query params
+
+    if (!senderId) { // if senderId is not provided
+        return res.status(400).json({
+            message: 'Sender ID is required'
+        });
+    }
+
+    try {
+        const posts = await Post.find({ senderId: senderId }); // fetch posts by senderId
+
+        if (posts.length === 0) { // if no posts are found
+            return res.status(404).json({
+                message: `No posts found for sender with ID ${senderId}`
+            });
+        }
+
+        return res.status(200).json({ // if posts are found
+            message: 'Posts fetched successfully',
+            posts: posts
+        });
+    } catch (error) {
+        console.error(`Error fetching posts for sender with ID ${senderId}:`, error.message);
+
+        return res.status(500).json({
+            message: 'An error occurred while fetching the posts',
+            error: error.message
+        });
+    }
+};
+        
