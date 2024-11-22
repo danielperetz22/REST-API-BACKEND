@@ -5,7 +5,12 @@ const mongoose = require('mongoose');
 const postRoutes = require('./routes/PostsRoutes');
 const port = process.env.PORT;
 
+
 app.use(express.json());
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
 app.use('/post', postRoutes);
 
 mongoose.connect('mongodb://localhost:27017/mydb',)

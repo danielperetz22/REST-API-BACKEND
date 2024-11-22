@@ -1,30 +1,38 @@
-### Add a New Post
-POST http://localhost:3000/post
-Content-Type: application/json
-
-{
-    "title": "My First Post",
-    "content": "This is the content of my first post",
-    "owner": "Hila",
-    "senderId": "12345"
-}
-
 
 ### Add a New Post
 POST http://localhost:3000/post
 Content-Type: application/json
 
 {
-    "title": "My Second Post",
-    "content": "This is the content of my 2nd post",
-    "owner": "Daniel",
-    "senderId": "56789"
+    "title": "New Test Post",
+    "content": "This is a test content",
+    "owner": "Tester",
+    "senderId": "1"
 }
+
+### Get Post by ID
+GET http://localhost:3000/post/673ee70389e5a8c9ca932138
 
 
 ### Get All Posts
-GET http://localhost:3000/post
+GET http://localhost:3000/post/all
 
 
 ### Get Posts by Sender
-GET http://localhost:3000/post?senderId=12345
+GET http://localhost:3000/post/filter/bySender?senderId=12345
+
+### Update a Post
+PUT http://localhost:3000/post/673f17390b9a74863208f276
+Content-Type: application/json
+
+{
+    "title": "Updated Title",
+    "content": "Updated content",
+    "owner": "Updated Owner"
+}
+
+
+
+
+
+
