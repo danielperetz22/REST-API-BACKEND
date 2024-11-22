@@ -27,13 +27,8 @@ exports.addPost = async (req, res) => {
             message: 'An error occurred while adding the post',
             error: error.message
         });
-
-exports.createPost = async (req, res) => {
-  try {
-    const { title, content, owner, senderId } = req.body;
-
-    if (!senderId) {
-      return res.status(400).json({ message: "senderId is required" });
+    }
+};
 
 
 exports.getAllPosts = async (req , res) => {
