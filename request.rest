@@ -4,25 +4,23 @@ POST http://localhost:3000/post
 Content-Type: application/json
 
 {
-    "title": "New Test Post",
-    "content": "This is a test content",
-    "owner": "Tester",
-    "senderId": "1"
+    "title": "123",
+    "content": "123",
+    "owner": "123",
+    "senderId": "123"
 }
 
 ### Get Post by ID
-GET http://localhost:3000/post/673ee70389e5a8c9ca932138
-
+GET http://localhost:3000/post/6741ce928595b625cfadd28b
 
 ### Get All Posts
 GET http://localhost:3000/post/all
 
-
 ### Get Posts by Sender
-GET http://localhost:3000/post/filter/bySender?senderId=12345
+GET http://localhost:3000/post/filter/bySender?senderId=123
 
 ### Update a Post
-PUT http://localhost:3000/post/673f17390b9a74863208f276
+PUT http://localhost:3000/post/6741ce928595b625cfadd28b
 Content-Type: application/json
 
 {
@@ -30,6 +28,53 @@ Content-Type: application/json
     "content": "Updated content",
     "owner": "Updated Owner"
 }
+
+
+
+
+
+
+### Create a new comment
+POST http://localhost:3000/comment
+Content-Type: application/json
+
+{
+  "content": "to DELETE",
+  "postId": "6741ce928595b625cfadd28b",
+  "owner": "user13"
+}
+
+
+
+### Get all comments
+GET http://localhost:3000/comment/all
+
+
+
+
+### Get comments by Post ID
+GET http://localhost:3000/comment/post/6741ce928595b625cfadd28b
+
+
+
+### Get a comment by ID
+GET http://localhost:3000/comment/6742f4f9d3ab32cf7b389697
+
+
+
+### Update a comment by ID
+PUT http://localhost:3000/comment/6742f4f9d3ab32cf7b389697
+Content-Type: application/json
+
+{
+  "content": "Updated comment to DELETE",
+  "owner": "user123"
+}
+
+
+
+### Delete a comment by ID
+DELETE http://localhost:3000/comment/6742f4f9d3ab32cf7b389697
 
 
 
