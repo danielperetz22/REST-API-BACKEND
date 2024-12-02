@@ -4,10 +4,10 @@ POST http://localhost:3000/post
 Content-Type: application/json
 
 {
-    "title": "123",
-    "content": "123",
-    "owner": "123",
-    "senderId": "123"
+    "title": "12",
+    "content": "12",
+    "owner": "12",
+    "senderId": "12"
 }
 
 ### Get Post by ID
