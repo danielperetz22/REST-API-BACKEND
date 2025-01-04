@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import postRoutes from './Routes/PostsRoutes';
 import CommentRoutes from './Routes/CommentRoutes';
+import AuthRoutes from './Routes/AuthRoutes';
 
 
 dotenv.config();
@@ -20,6 +21,7 @@ app.use((req, res, next) => {
 
 app.use('/post', postRoutes);
 app.use('/comment', CommentRoutes);
+app.use('/auth', AuthRoutes);
 
 
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/mydb')
