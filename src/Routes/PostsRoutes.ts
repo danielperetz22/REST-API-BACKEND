@@ -10,7 +10,6 @@ router.put('/:id', PostControllers.updatePost);
 
 router.post('/', (req, res, next) => {
     console.log('Request reached POST /');
-    next();
 });
 
 export default router;

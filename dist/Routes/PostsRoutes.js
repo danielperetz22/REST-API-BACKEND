@@ -13,7 +13,6 @@ router.get('/:id', PostControllers_1.default.getPostById);
 router.put('/:id', PostControllers_1.default.updatePost);
 router.post('/', (req, res, next) => {
     console.log('Request reached POST /');
-    next();
 });
 exports.default = router;
 //# sourceMappingURL=PostsRoutes.js.map
