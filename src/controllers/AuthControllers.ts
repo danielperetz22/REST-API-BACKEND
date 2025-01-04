@@ -4,14 +4,19 @@ import bcrypt from 'bcrypt';
 import User from '../models/AuthModel';
 
 const register = async (req: Request, res: Response) => {
+  const username = req.body.username;
   const email = req.body.email;
   const password = req.body.password;
 
-  if(!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required' });
+  if(!email || !password || !username) {
+    return res.status(400).json({ message: 'username, Email and password are required' });
   }
-  const user = await User.findOne({email: email});
+  const user = await User.findOne({username: username});
   if(user) {
+    return res.status(400).json({ message: 'username already exists' });
+  }
+  const userEmail = await User.findOne({email: email});
+  if(userEmail) {
     return res.status(400).json({ message: 'Email already exists' });
   }
     try {
@@ -23,15 +28,20 @@ const register = async (req: Request, res: Response) => {
     }
 };
 const login = async (req: Request, res: Response) => {
+  const username = req.body.username;
   const email = req.body.email;
   const password = req.body.password;
 
-  if(!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required' });
+  if(!email || !password || !username) {
+    return res.status(400).json({ message: 'username, Email and password are required' });
   }
-  const user = await User.findOne({email: email});
+  const user = await User.findOne({username: username});
   if(!user) {
-    return res.status(400).json({ message: 'Invalid email or password' });
+    return res.status(400).json({ message: 'Invalid username' });
+  }
+  const userEmail = await User.findOne({email: email});
+  if(userEmail) {
+    return res.status(400).json({ message: 'Invalid Email'});
   }
   const isMatch = await bcrypt.compare(password, user.password);
   if(!isMatch) {
@@ -54,9 +64,5 @@ export const AuthMiddleware = (req : Request, res : Response, next : NextFunctio
     }
     next();
 }
-
-
-
-
 
 export default { register, login };
