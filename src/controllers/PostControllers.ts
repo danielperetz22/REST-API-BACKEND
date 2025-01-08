@@ -1,31 +1,39 @@
 import Post from '../models/PostModel';
 import { Request, Response } from 'express'; 
 export const addPost = async (req : Request , res : Response) => {
-    const { title, content, senderId } = req.body;
+       const title = req.body.title;
+       const content = req.body.content; 
+        const senderId = req.body.senderId;
+    
     console.log('Received POST request with data:', req.body);
   
     if (!title || !content || !senderId) {
-      return res.status(400).json({
+       res.status(400).json({
         message: 'Missing required fields: title, content, and senderId are required',
       });
+      return
     }
   
     try {
-      const post = new Post(req.body); 
-      await post.save(); 
-  
-      return res.status(201).json({
+      const post =await Post.create({
+        title: title,
+        content: content,
+        senderId: senderId,
+      });
+             res.status(201).json({
         message: 'Post added successfully',
         post: post,
       });
+      return
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'; 
       console.error('Error adding post:', errorMessage);
   
-      return res.status(500).json({
+       res.status(500).json({
         message: 'An error occurred while adding the post',
         error: errorMessage,
       });
+      return
     }
   };
   
@@ -33,18 +41,20 @@ export const addPost = async (req : Request , res : Response) => {
 export const getAllPosts = async (req : Request, res : Response) => {
   try {
     const posts = await Post.find(); 
-    return res.status(200).json({
+     res.status(200).json({
       message: 'Posts fetched successfully',
       posts: posts,
     });
+    return
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     console.error('Error fetching posts:', errorMessage);
 
-    return res.status(500).json({
+     res.status(500).json({
       message: 'An error occurred while fetching the posts',
       error: errorMessage,
     });
+    return
   }
 };
 
@@ -54,23 +64,26 @@ export const getPostById = async (req : Request, res: Response) => {
     const post = await Post.findById(postId);
 
     if (!post) {
-      return res.status(404).json({
+       res.status(404).json({
         message: `Post with ID ${postId} not found`,
       });
+      return
     }
 
-    return res.status(200).json({
+     res.status(200).json({
       message: 'Post fetched successfully',
       post: post,
     });
+    return
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     console.error(`Error fetching post with ID ${postId}:`, errorMessage);
 
-    return res.status(500).json({
+     res.status(500).json({
       message: 'An error occurred while fetching the post',
       error:errorMessage,
     });
+    return
   }
 };
 
@@ -78,32 +91,34 @@ export const getPostsBySender = async (req : Request, res: Response) => {
   const senderId = req.query.senderId;
 
   if (!senderId) {
-    return res.status(400).json({
+     res.status(400).json({
       message: 'Sender ID is required',
     });
+    return
   }
-
   try {
     const posts = await Post.find({ senderId });
 
     if (posts.length === 0) {
-      return res.status(404).json({
+       res.status(404).json({
         message: `No posts found for sender ID ${senderId}`,
       });
+      return
     }
-
-    return res.status(200).json({
+     res.status(200).json({
       message: 'Posts fetched successfully',
       posts: posts,
     });
+    return
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'; 
     console.error(`Error fetching posts for sender ID ${senderId}:`,errorMessage);
 
-    return res.status(500).json({
+     res.status(500).json({
       message: 'An error occurred while fetching the posts',
       error: errorMessage,
     });
+    return
   }
 };
 
@@ -116,32 +131,36 @@ export const updatePost = async (req: Request, res: Response) => {
 
   try {
     if (!postId) {
-      return res.status(400).json({
+      res.status(400).json({
         message: 'Post ID is required',
       });
+      return
     }
     const post = await Post.findById(postId);
     if (!post) {
-      return res.status(404).json({
+        res.status(404).json({
         message: `Post with ID ${postId} not found`,
       });
+      return
     }
     const updatedPost = await Post.findByIdAndUpdate(postId, updatePost, {
       new: true,
       runValidators: true,
     });
-    return res.status(200).json({
+     res.status(200).json({
       message: 'Post updated successfully',
       post: updatedPost,
     });
+    return
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     console.error(`Error updating post with ID ${postId}:`, errorMessage);
 
-    return res.status(500).json({
+      res.status(500).json({
       message: 'An error occurred while updating the post',
       error: errorMessage,
     });
+    return
   }
 };
 
