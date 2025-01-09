@@ -129,48 +129,5 @@ export const updatePost = async (req: Request, res: Response) => {
   }
 };
 
-// Middleware for Authentication
-export const authenticate = (req: Request, res: Response, next: Function) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
 
-  const token = authHeader.split(' ')[1];
-  try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET!);
-    req.user = payload; // Attach payload to the request for downstream use
-    next();
-  } catch (err) {
-    return res.status(401).json({ message: 'Invalid token' });
-  }
-};
-
-// Controller for Creating a Post
-export const createPost = async (req: Request, res: Response) => {
-  const { title, content, owner } = req.body;
-
-  // Validate required fields
-  if (!title || !content || !owner) {
-    return res.status(400).json({ message: 'Missing required fields' });
-  }
-
-  try {
-    // Simulate saving to the database (replace with actual DB logic)
-    const newPost = {
-      id: 'generated-post-id',
-      title,
-      content,
-      owner,
-      createdAt: new Date(),
-    };
-
-    res.status(201).json(newPost);
-  } catch (err) {
-    console.error('Error creating post:', err);
-    res.status(500).json({ message: 'Failed to create post' });
-  }
-};
-
-
-export default { addPost, getAllPosts, getPostById, getPostsBySender, updatePost, authenticate, createPost };
+export default { addPost, getAllPosts, getPostById, getPostsBySender, updatePost };

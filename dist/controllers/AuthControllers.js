@@ -17,15 +17,21 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const AuthModel_1 = __importDefault(require("../models/AuthModel"));
 const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const username = req.body.username;
     const email = req.body.email;
     const password = req.body.password;
-    if (!email || !password) {
-        res.status(400).json({ message: 'Email and password are required' });
+    if (!username || !email || !password) {
+        res.status(400).json({ message: 'username ,Email and password are required' });
         return;
     }
-    const user = yield AuthModel_1.default.findOne({ email: email });
+    const user = yield AuthModel_1.default.findOne({ username: username });
     if (user) {
-        res.status(400).json({ message: 'Email already exists' });
+        res.status(400).json({ message: 'username already exists' });
+        return;
+    }
+    const userenail = yield AuthModel_1.default.findOne({ email: email });
+    if (userenail) {
+        res.status(400).json({ message: 'email already exists' });
         return;
     }
     try {

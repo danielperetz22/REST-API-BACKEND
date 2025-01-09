@@ -10,7 +10,4 @@ router.put('/:id', PostControllers.updatePost);
 router.post('/', (req, res, next) => {
     console.log('Request reached POST /');
 });
-router.post('/',PostControllers.createPost);
-router.post('/',PostControllers.authenticate);
-
 export default router;
