@@ -105,7 +105,8 @@ const deleteComment = async (req: Request, res: Response) => {
         return
     }
 
-    return res.status(200).json({ message: 'Comment deleted successfully' });
+   res.status(200).json({ message: 'Comment deleted successfully' });
+   return
   } catch (err: any) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
     console.error('Error deleting comment:', errorMessage);

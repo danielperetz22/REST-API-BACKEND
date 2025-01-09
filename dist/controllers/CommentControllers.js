@@ -103,7 +103,8 @@ const deleteComment = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             res.status(404).json({ message: 'Comment not found' });
             return;
         }
-        return res.status(200).json({ message: 'Comment deleted successfully' });
+        res.status(200).json({ message: 'Comment deleted successfully' });
+        return;
     }
     catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
