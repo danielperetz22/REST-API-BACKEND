@@ -7,22 +7,26 @@ const createComment = async (req: Request, res: Response) => {
   const { content, postId, owner } = req.body;
 
   if (!content || !postId || !owner) {
-    return res.status(400).json({ message: 'Content, postId, and owner are required' });
+     res.status(400).json({ message: 'Content, postId, and owner are required' });
+      return
   }
 
   try {
     const postExists = await Post.findById(postId);
     if (!postExists) {
-      return res.status(404).json({ message: 'Post not found' });
+       res.status(404).json({ message: 'Post not found' });
+        return
     }
     const newComment = new Comment({ content, postId, owner });
     const savedComment = await newComment.save();
 
-    return res.status(201).json(savedComment);
+     res.status(201).json(savedComment);
+      return
   } catch (err: any) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
     console.error('Error creating comment:', errorMessage);
-    return res.status(500).json({ message: 'Error creating comment', error: errorMessage });
+     res.status(500).json({ message: 'Error creating comment', error: errorMessage });
+      return
   }
 };
 
@@ -71,13 +75,15 @@ const updateComment = (req: Request, res: Response) => {
   const { content, owner } = req.body;
 
   if (!content || !owner) {
-    return res.status(400).json({ message: 'Content and owner are required' });
+     res.status(400).json({ message: 'Content and owner are required' });
+      return
   }
 
   Comment.findByIdAndUpdate(commentId, { content, owner }, { new: true, runValidators: true })
     .then((updatedComment) => {
       if (!updatedComment) {
-        return res.status(404).json({ message: 'Comment not found' });
+         res.status(404).json({ message: 'Comment not found' });
+          return
       }
       res.status(200).json(updatedComment);
     })
@@ -95,14 +101,16 @@ const deleteComment = async (req: Request, res: Response) => {
     const deletedComment = await Comment.findByIdAndDelete(commentId);
 
     if (!deletedComment) {
-      return res.status(404).json({ message: 'Comment not found' });
+       res.status(404).json({ message: 'Comment not found' });
+        return
     }
 
     return res.status(200).json({ message: 'Comment deleted successfully' });
   } catch (err: any) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
     console.error('Error deleting comment:', errorMessage);
-    return res.status(500).json({ message: 'Failed to delete comment', error: errorMessage });
+     res.status(500).json({ message: 'Failed to delete comment', error: errorMessage });
+     return
   }
 };
 

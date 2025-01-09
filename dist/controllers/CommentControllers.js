@@ -18,21 +18,25 @@ const createComment = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     console.log('Attempting to create comment');
     const { content, postId, owner } = req.body;
     if (!content || !postId || !owner) {
-        return res.status(400).json({ message: 'Content, postId, and owner are required' });
+        res.status(400).json({ message: 'Content, postId, and owner are required' });
+        return;
     }
     try {
         const postExists = yield PostModel_1.default.findById(postId);
         if (!postExists) {
-            return res.status(404).json({ message: 'Post not found' });
+            res.status(404).json({ message: 'Post not found' });
+            return;
         }
         const newComment = new CommentModel_1.default({ content, postId, owner });
         const savedComment = yield newComment.save();
-        return res.status(201).json(savedComment);
+        res.status(201).json(savedComment);
+        return;
     }
     catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
         console.error('Error creating comment:', errorMessage);
-        return res.status(500).json({ message: 'Error creating comment', error: errorMessage });
+        res.status(500).json({ message: 'Error creating comment', error: errorMessage });
+        return;
     }
 });
 const getAllComments = (req, res) => {
@@ -74,12 +78,14 @@ const updateComment = (req, res) => {
     const { commentId } = req.params;
     const { content, owner } = req.body;
     if (!content || !owner) {
-        return res.status(400).json({ message: 'Content and owner are required' });
+        res.status(400).json({ message: 'Content and owner are required' });
+        return;
     }
     CommentModel_1.default.findByIdAndUpdate(commentId, { content, owner }, { new: true, runValidators: true })
         .then((updatedComment) => {
         if (!updatedComment) {
-            return res.status(404).json({ message: 'Comment not found' });
+            res.status(404).json({ message: 'Comment not found' });
+            return;
         }
         res.status(200).json(updatedComment);
     })
@@ -94,15 +100,16 @@ const deleteComment = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     try {
         const deletedComment = yield CommentModel_1.default.findByIdAndDelete(commentId);
         if (!deletedComment) {
-            return res.status(404).json({ message: 'Comment not found' });
+            res.status(404).json({ message: 'Comment not found' });
+            return;
         }
         return res.status(200).json({ message: 'Comment deleted successfully' });
     }
     catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
         console.error('Error deleting comment:', errorMessage);
-        return res.status(500).json({ message: 'Failed to delete comment', error: errorMessage });
+        res.status(500).json({ message: 'Failed to delete comment', error: errorMessage });
+        return;
     }
 });
 exports.default = { createComment, getAllComments, getCommentsByPost, getCommentById, updateComment, deleteComment };
-//# sourceMappingURL=CommentControllers.js.map

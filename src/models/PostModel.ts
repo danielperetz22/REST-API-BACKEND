@@ -19,10 +19,6 @@ const postSchema: Schema<IPost> = new Schema(
       type: String,
       required: true,
     },
-    owner: {
-      type: String,
-      required: false,
-    },
     senderId: {
       type: String,
       required: true,

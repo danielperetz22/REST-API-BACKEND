@@ -6,27 +6,26 @@ Content-Type: application/json
 {
     "title": "12",
     "content": "12",
-    "owner": "12",
     "senderId": "12"
 }
 
 ### Get Post by ID
-GET http://localhost:3000/post/6741ce928595b625cfadd28b
+GET http://localhost:3000/post/677bbd09b970ccb248382bb6
 
 ### Get All Posts
 GET http://localhost:3000/post/all
 
 ### Get Posts by Sender
-GET http://localhost:3000/post/filter/bySender?senderId=123
+GET http://localhost:3000/post/filter/bySender?senderId=12
 
 ### Update a Post
-PUT http://localhost:3000/post/6741ce928595b625cfadd28b
+PUT http://localhost:3000/post/677fa63b98487887462b9980
 Content-Type: application/json
 
 {
     "title": "Updated Title",
     "content": "Updated content",
-    "owner": "Updated Owner"
+    "senderId": "Updated Owner"
 }
 
 
@@ -40,7 +39,7 @@ Content-Type: application/json
 
 {
   "content": "to DELETE",
-  "postId": "6741ce928595b625cfadd28b",
+  "postId": "677bbd09b970ccb248382bb6",
   "owner": "user13"
 }
 
@@ -53,17 +52,17 @@ GET http://localhost:3000/comment/all
 
 
 ### Get comments by Post ID
-GET http://localhost:3000/comment/post/6741ce928595b625cfadd28b
+GET http://localhost:3000/comment/post/677fa63b98487887462b9980
 
 
 
 ### Get a comment by ID
-GET http://localhost:3000/comment/6742f4f9d3ab32cf7b389697
+GET http://localhost:3000/comment/677faf89da14a71232f8d1a8
 
 
 
 ### Update a comment by ID
-PUT http://localhost:3000/comment/6742f4f9d3ab32cf7b389697
+PUT http://localhost:3000/comment/677faf89da14a71232f8d1a8
 Content-Type: application/json
 
 {
@@ -74,7 +73,7 @@ Content-Type: application/json
 
 
 ### Delete a comment by ID
-DELETE http://localhost:3000/comment/6742f4f9d3ab32cf7b389697
+DELETE http://localhost:3000/comment/677faf89da14a71232f8d1a8
 
 
 

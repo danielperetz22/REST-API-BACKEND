@@ -13,4 +13,3 @@ router.get('/:commentId', CommentControllers_1.default.getCommentById);
 router.put('/:commentId', CommentControllers_1.default.updateComment);
 router.delete('/:commentId', CommentControllers_1.default.deleteComment);
 exports.default = router;
-//# sourceMappingURL=CommentRoutes.js.map

@@ -15,4 +15,3 @@ router.post('/', (req, res, next) => {
     console.log('Request reached POST /');
 });
 exports.default = router;
-//# sourceMappingURL=PostsRoutes.js.map

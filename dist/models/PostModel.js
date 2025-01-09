@@ -43,10 +43,6 @@ const postSchema = new mongoose_1.Schema({
         type: String,
         required: true,
     },
-    owner: {
-        type: String,
-        required: false,
-    },
     senderId: {
         type: String,
         required: true,
@@ -54,4 +50,3 @@ const postSchema = new mongoose_1.Schema({
 }, { timestamps: true });
 const Post = mongoose_1.default.model('Post', postSchema);
 exports.default = Post;
-//# sourceMappingURL=PostModel.js.map
