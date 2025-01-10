@@ -9,6 +9,7 @@ router.get('/all', CommentControllers.getAllComments);
 router.get('/post/:postId', CommentControllers.getCommentsByPost);
 router.get('/:commentId', CommentControllers.getCommentById);
 router.put('/:commentId', CommentControllers.updateComment);
-router.delete('/:commentId', CommentControllers.deleteComment);
+router.delete('/:commentId', (req, res, next) => 
+    CommentControllers.deleteComment(req, res).catch(next))
 
 export default router;

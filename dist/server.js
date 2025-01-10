@@ -21,18 +21,14 @@ const AuthRoutes_1 = __importDefault(require("./Routes/AuthRoutes"));
 dotenv_1.default.config();
 const initApp = () => __awaiter(void 0, void 0, void 0, function* () {
     const app = (0, express_1.default)();
-    // Middleware for JSON parsing
     app.use(express_1.default.json());
-    // Logging middleware
     app.use((req, res, next) => {
         console.log(`${req.method} ${req.url}`);
         next();
     });
-    // Routes
     app.use('/post', PostsRoutes_1.default);
     app.use('/comment', CommentRoutes_1.default);
     app.use('/auth', AuthRoutes_1.default);
-    // MongoDB connection
     const mongoUri = process.env.MONGO_URI;
     if (!mongoUri) {
         throw new Error("MONGO_URI is not defined in the environment variables");
@@ -43,7 +39,7 @@ const initApp = () => __awaiter(void 0, void 0, void 0, function* () {
     }
     catch (err) {
         console.error("MongoDB connection error:", err);
-        throw err; // Re-throw error to handle it in tests or calling code
+        throw err;
     }
     return app;
 });

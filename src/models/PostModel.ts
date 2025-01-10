@@ -3,7 +3,6 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 interface IPost extends Document {
   title: string;
   content: string;
-  owner?: string; 
   senderId: string;
   createdAt?: Date; 
   updatedAt?: Date; 
