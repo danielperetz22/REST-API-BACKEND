@@ -38,5 +38,6 @@ const UserSchema = new mongoose_1.Schema({
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    tokens: { type: [String], default: [] },
 }, { timestamps: true });
 exports.default = mongoose_1.default.model('User', UserSchema);

@@ -31,9 +31,11 @@ const register = async (req, res) => {
         const newUser = new AuthModel_1.default({ username, email, password: hashedPassword });
         await newUser.save();
         res.status(201).json(newUser);
+        return;
     }
     catch (err) {
         res.status(500).json({ message: 'Internal server error' });
+        return;
     }
 };
 const login = async (req, res) => {
@@ -67,20 +69,17 @@ const login = async (req, res) => {
 };
 const AuthMiddleware = (req, res, next) => {
     const authHeader = req.headers['authorization'];
-    console.log('Authorization Header:', authHeader);
     const token = authHeader && authHeader.split(' ')[1];
-    console.log('Extracted Token:', token);
     if (!token) {
         res.status(401).json({ message: 'Authorization token is missing' });
         return;
     }
-    jsonwebtoken_1.default.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
-        console.log('JWT Verification Attempt:', { err, user });
+    jsonwebtoken_1.default.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
         if (err) {
             res.status(403).json({ message: 'Invalid or expired token', error: err.message });
             return;
         }
-        req.user = user;
+        req.user = decoded;
         next();
     });
 };
