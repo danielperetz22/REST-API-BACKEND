@@ -14,4 +14,5 @@ router.put('/:id', PostControllers_1.default.updatePost);
 router.post('/', (req, res, next) => {
     console.log('Request reached POST /');
 });
+router.delete('/delete/:id', PostControllers_1.default.deletePost);
 exports.default = router;
