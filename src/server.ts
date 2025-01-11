@@ -40,3 +40,4 @@ const initApp = async (): Promise<Express> => {
 };
 
 export default initApp;
+
