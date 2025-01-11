@@ -11,5 +11,5 @@ router.get('/all', CommentControllers_1.default.getAllComments);
 router.get('/post/:postId', CommentControllers_1.default.getCommentsByPost);
 router.get('/:commentId', CommentControllers_1.default.getCommentById);
 router.put('/:commentId', CommentControllers_1.default.updateComment);
-router.delete('/:commentId', CommentControllers_1.default.deleteComment);
+router.delete('/:commentId', (req, res, next) => CommentControllers_1.default.deleteComment(req, res).catch(next));
 exports.default = router;
