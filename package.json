@@ -7,7 +7,7 @@
     "build": "tsc",
     "dev": "nodemon dist/app.js",
     "start": "node dist/app.js",
-    "test": "jest --detectOpenHandles --forceExit --preset ts-jest"
+    "test": "tsc && jest --detectOpenHandles --forceExit --coverage "
   },
   "repository": {
     "type": "git",

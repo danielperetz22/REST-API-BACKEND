@@ -1,133 +1,110 @@
+import mongoose from 'mongoose';
 import Post from '../models/PostModel';
 import { Request, Response } from 'express'; 
-import jwt from 'jsonwebtoken';
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: any; 
-    }
+
+
+export const addPost = async (req: Request, res: Response) => {
+  const { title, content, senderId } = req.body;
+  if (!title || !content || !senderId) {
+    res.status(400).json({ message: 'Missing required fields: title, content, and senderId are required' });
+    return
   }
-}
 
-export const addPost = async (req : Request , res : Response) => {
-    const { title, content, senderId } = req.body;
-    console.log('Received POST request with data:', req.body);
-  
-    if (!title || !content || !senderId) {
-       res.status(400).json({message: 'Missing required fields: title, content, and senderId are required',});
-      return;
-    }
-  
-    try {
-      const post = new Post(req.body); 
-      await post.save(); 
-  
-       res.status(201).json({message: 'Post added successfully',post: post,});
-       return
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'; 
-      console.error('Error adding post:', errorMessage);
-  
-       res.status(500).json({message: 'An error occurred while adding the post',error: errorMessage,});
-        return
-    }
-  };
-  
-
-export const getAllPosts = async (req : Request, res : Response) => {
   try {
-    const posts = await Post.find(); 
-     res.status(200).json({message: 'Posts fetched successfully',posts: posts,});
-      return
+    const post = new Post(req.body);
+    await post.save();
+    res.status(201).json({ post });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    console.error('Error fetching posts:', errorMessage);
+    res.status(500).json({ message: 'Error adding post', error: String(error) });
+  }
+};
+  
 
-     res.status(500).json({message: 'An error occurred while fetching the posts',error: errorMessage,});
-      return
+export const getAllPosts = async (_req: Request, res: Response) => {
+  try {
+    const posts = await Post.find();
+    res.status(200).json({ posts });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching posts', error: String(error) });
   }
 };
 
-export const getPostById = async (req : Request, res: Response) => {
-  const postId = req.params.id;
-  try {
-    const post = await Post.findById(postId);
-
-    if (!post) {
-       res.status(404).json({message: `Post with ID ${postId} not found`,});
-      return
-    }
-
-     res.status(200).json({message: 'Post fetched successfully',post: post,});
-      return
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    console.error(`Error fetching post with ID ${postId}:`, errorMessage);
-
-     res.status(500).json({message: 'An error occurred while fetching the post',error:errorMessage,});
+export const getPostById = async (req: Request, res: Response) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+     res.status(400).json({ message: 'Invalid post ID format' });
      return
   }
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      res.status(404).json({ message: `Post with ID ${req.params.id} not found` });
+      return
+    }
+    res.status(200).json({ post });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching post', error: String(error) });
+  }
 };
 
-export const getPostsBySender = async (req : Request, res: Response) => {
-  const senderId = req.query.senderId;
-
+export const getPostsBySender = async (req: Request, res: Response) => {
+  const { senderId } = req.query;
   if (!senderId) {
-     res.status(400).json({message: 'Sender ID is required',});
-      return
+    res.status(400).json({ message: 'Sender ID is required' });
+    return
   }
 
   try {
     const posts = await Post.find({ senderId });
-
-    if (posts.length === 0) {
-       res.status(404).json({message: `No posts found for sender ID ${senderId}`,});
+    if (!posts.length) {
+      res.status(404).json({ message: `No posts found for sender ID ${senderId}` });
       return
     }
-
-     res.status(200).json({message: 'Posts fetched successfully',posts: posts,});
-     return
+    res.status(200).json({ posts });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'; 
-    console.error(`Error fetching posts for sender ID ${senderId}:`,errorMessage);
-
-     res.status(500).json({message: 'An error occurred while fetching the posts',error: errorMessage,});
-      return
+    res.status(500).json({ message: 'Error fetching posts', error: String(error) });
   }
 };
 
 export const updatePost = async (req: Request, res: Response) => {
-  const postId = req.params.id;
-  const updatePost = req.body;
+  const { id } = req.params;
 
-  console.log('Received PUT request for ID:', postId);
-  console.log('Update data:', updatePost);
+  if (!req.body || Object.keys(req.body).length === 0) {
+    res.status(400).json({ message: "Request body cannot be empty" });
+    return
+  }
+  try {
+    const existingPost = await Post.findById(id);
+    if (!existingPost) {
+      res.status(404).json({ message: `Post with ID ${id} not found` });
+      return;
+    }
+    const updatedPost = await Post.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
+    res.status(200).json({ post: updatedPost });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating posts', error: String(error) });
+  }
+};
+
+export const deletePost = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  console.log("DELETE request received with ID:", id);
 
   try {
-    if (!postId) {
-       res.status(400).json({message: 'Post ID is required',});
-      return
-    }
-    const post = await Post.findById(postId);
-    if (!post) {
-       res.status(404).json({message: `Post with ID ${postId} not found`,});
-      return
-    }
-    const updatedPost = await Post.findByIdAndUpdate(postId, updatePost, {
-      new: true,
-      runValidators: true,
-    });
-     res.status(200).json({message: 'Post updated successfully',post: updatedPost,});
-      return
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    console.error(`Error updating post with ID ${postId}:`, errorMessage);
+    const deletedPost = await Post.findByIdAndDelete(id);
+    console.log("Deleted post:", deletedPost);
 
-     res.status(500).json({message: 'An error occurred while updating the post',error: errorMessage,});
-      return
+    if (!deletedPost) {
+      res.status(404).json({ message: `Post with ID ${id} not found` });
+      return;
+    }
+
+    res.status(200).json({ message: "Post deleted successfully",post: deletedPost });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting post', error: String(error) });
   }
 };
 
 
-export default { addPost, getAllPosts, getPostById, getPostsBySender, updatePost };
+
+export default { addPost, getAllPosts, getPostById, getPostsBySender, updatePost, deletePost };
