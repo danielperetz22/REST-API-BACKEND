@@ -22,10 +22,8 @@ const createComment = async (req: Request, res: Response) => {
 
      res.status(201).json(savedComment);
       return
-  } catch (err: any) {
-    const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-    console.error('Error creating comment:', errorMessage);
-     res.status(500).json({ message: 'Error creating comment', error: errorMessage });
+  } catch (error: any) {
+     res.status(500).json({ message: 'Error creating comment', error: String(error) });
       return
   }
 };
@@ -34,9 +32,8 @@ const getAllComments = (req: Request, res: Response) => {
   console.log('Attempting to fetch all comments');
   Comment.find()
     .then((comments) => res.status(200).json(comments))
-    .catch((err: any) => {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      res.status(500).json({ message: 'Error fetching comments', error: errorMessage });
+    .catch((error: any) => {
+      res.status(500).json({ message: 'Error fetching comments', error: String(error) });
     });
 };
 
@@ -46,9 +43,8 @@ const getCommentsByPost = (req: Request, res: Response) => {
 
   Comment.find({ postId })
     .then((comments) => res.status(200).json(comments))
-    .catch((err: any) => {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      res.status(500).json({ message: 'Error fetching comments for post', error: errorMessage });
+    .catch((error: any) => {
+      res.status(500).json({ message: 'Error fetching comments for post', error: String(error) });
     });
 };
 
@@ -63,9 +59,8 @@ const getCommentById = (req: Request, res: Response) => {
       }
       res.status(200).json(comment);
     })
-    .catch((err: any) => {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      res.status(500).json({ message: 'Error fetching comment', error: errorMessage });
+    .catch((error: any) => {
+      res.status(500).json({ message: 'Error fetching comment', error: String(error) });
     });
 };
 
@@ -87,9 +82,8 @@ const updateComment = (req: Request, res: Response) => {
       }
       res.status(200).json(updatedComment);
     })
-    .catch((err: any) => {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      res.status(500).json({ message: 'Error updating comment', error: errorMessage });
+    .catch((error: any) => {
+      res.status(500).json({ message: 'Error updating comment', error: String(error) });
     });
 };
 
@@ -107,12 +101,19 @@ const deleteComment = async (req: Request, res: Response) => {
 
    res.status(200).json({ message: 'Comment deleted successfully' });
    return
-  } catch (err: any) {
-    const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-    console.error('Error deleting comment:', errorMessage);
-     res.status(500).json({ message: 'Failed to delete comment', error: errorMessage });
+  } catch (error) {
+     res.status(500).json({ message: 'Failed to delete comment', error: String(error) });
      return
   }
 };
 
-export default { createComment, getAllComments, getCommentsByPost, getCommentById, updateComment, deleteComment };
+const deleteAllComments = async (req: Request, res: Response) => {
+  try{
+    await Comment.deleteMany({});
+    res.status(200).json({ message: 'All comments deleted successfully' });
+  }catch(error){
+    res.status(500).json({ message: 'Error deleting all comments', error: String(error) });
+  }
+};
+
+export default { createComment, getAllComments, getCommentsByPost, getCommentById, updateComment, deleteComment,deleteAllComments };
