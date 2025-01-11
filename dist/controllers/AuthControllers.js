@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -15,13 +6,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const AuthModel_1 = __importDefault(require("../models/AuthModel"));
-const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const register = async (req, res) => {
     const { username, email, password } = req.body;
     if (!username || !email || !password) {
         res.status(400).json({ message: 'Username, email, and password are required' });
         return;
     }
-    const existingUser = yield AuthModel_1.default.findOne({
+    const existingUser = await AuthModel_1.default.findOne({
         $or: [{ username }, { email }]
     });
     if (existingUser) {
@@ -35,10 +26,10 @@ const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         }
     }
     try {
-        const salt = yield bcrypt_1.default.genSalt(10);
-        const hashedPassword = yield bcrypt_1.default.hash(password, salt);
+        const salt = await bcrypt_1.default.genSalt(10);
+        const hashedPassword = await bcrypt_1.default.hash(password, salt);
         const newUser = new AuthModel_1.default({ username, email, password: hashedPassword });
-        yield newUser.save();
+        await newUser.save();
         res.status(201).json(newUser);
         return;
     }
@@ -46,22 +37,22 @@ const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         res.status(500).json({ message: 'Internal server error' });
         return;
     }
-});
-const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+};
+const login = async (req, res) => {
     const { username, email, password } = req.body;
     if ((!username && !email) || !password) {
         res.status(400).json({ message: 'Username or email and password are required' });
         return;
     }
     try {
-        const user = yield AuthModel_1.default.findOne({
+        const user = await AuthModel_1.default.findOne({
             $or: [{ username }, { email }]
         });
         if (!user) {
             res.status(400).json({ message: 'Invalid username or email' });
             return;
         }
-        const isMatch = yield bcrypt_1.default.compare(password, user.password);
+        const isMatch = await bcrypt_1.default.compare(password, user.password);
         if (!isMatch) {
             res.status(400).json({ message: 'Invalid password' });
             return;
@@ -75,7 +66,7 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         res.status(500).json({ message: 'Internal server error' });
         return;
     }
-});
+};
 const AuthMiddleware = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];

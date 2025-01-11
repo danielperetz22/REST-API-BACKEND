@@ -3,11 +3,11 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import User from '../models/AuthModel';
 
-// Extend Express Request interface
+
 declare global {
   namespace Express {
     interface Request {
-      user?: any; 
+      user?: any;
     }
   }
 }

@@ -41,9 +41,9 @@ POST http://localhost:3000/comment
 Content-Type: application/json
 
 {
-  "content": "to DELETE",
-  "postId": "677bbd09b970ccb248382bb6",
-  "owner": "user13"
+  "content": "comment content 2",
+  "postId": "67823002977ae01f153634b6",
+  "owner": "Hila"
 }
 
 
@@ -60,12 +60,12 @@ GET http://localhost:3000/comment/post/677fa63b98487887462b9980
 
 
 ### Get a comment by ID
-GET http://localhost:3000/comment/677faf89da14a71232f8d1a8
+GET http://localhost:3000/comment/67823c001da14d49d5a9d7bc
 
 
 
 ### Update a comment by ID
-PUT http://localhost:3000/comment/677faf89da14a71232f8d1a8
+PUT http://localhost:3000/comment/update/67823c001da14d49d5a9d7bc
 Content-Type: application/json
 
 {
@@ -76,7 +76,7 @@ Content-Type: application/json
 
 
 ### Delete a comment by ID
-DELETE http://localhost:3000/comment/677faf89da14a71232f8d1a8
+DELETE http://localhost:3000/comment/delete/67823c001da14d49d5a9d7bc
 
 
 
