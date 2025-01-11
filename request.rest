@@ -4,19 +4,19 @@ POST http://localhost:3000/post
 Content-Type: application/json
 
 {
-    "title": "12",
-    "content": "12",
-    "senderId": "12"
+    "title": "title",
+    "content": "content",
+    "senderId": "Hilaa"
 }
 
 ### Get Post by ID
-GET http://localhost:3000/post/677bbd09b970ccb248382bb6
+GET http://localhost:3000/post/6780eee9b8af99ae8ce4deed
 
 ### Get All Posts
 GET http://localhost:3000/post/all
 
 ### Get Posts by Sender
-GET http://localhost:3000/post/filter/bySender?senderId=12
+GET http://localhost:3000/post/filter/bySender?senderId=Hila
 
 ### Update a Post
 PUT http://localhost:3000/post/677fa63b98487887462b9980
@@ -27,6 +27,9 @@ Content-Type: application/json
     "content": "Updated content",
     "senderId": "Updated Owner"
 }
+
+### Delete a Post
+DELETE http://localhost:3000/post/delete/6780eee9b8af99ae8ce4deed
 
 
 
