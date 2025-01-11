@@ -11,8 +11,5 @@ router.get('/filter/bySender', PostControllers_1.default.getPostsBySender);
 router.get('/all', PostControllers_1.default.getAllPosts);
 router.get('/:id', PostControllers_1.default.getPostById);
 router.put('/:id', PostControllers_1.default.updatePost);
-router.post('/', (req, res, next) => {
-    console.log('Request reached POST /');
-});
 router.delete('/delete/:id', PostControllers_1.default.deletePost);
 exports.default = router;
