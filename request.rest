@@ -76,7 +76,7 @@ Content-Type: application/json
 
 
 ### Delete a comment by ID
-DELETE http://localhost:3000/comment/677faf89da14a71232f8d1a8
+DELETE http://localhost:3000/comment/delete/677faf89da14a71232f8d1a8
 
 
 
