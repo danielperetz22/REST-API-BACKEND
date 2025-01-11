@@ -3,6 +3,13 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import User from '../models/AuthModel';
 
+declare global {
+  namespace Express {
+    interface Request {
+      user?: any;
+    }
+  }
+}
 
 const register = async (req: Request, res: Response) => {
    const { username, email, password } = req.body;

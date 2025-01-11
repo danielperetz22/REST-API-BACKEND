@@ -3,7 +3,6 @@ import Post from '../models/PostModel';
 import { Request, Response } from 'express'; 
 
 
-
 export const addPost = async (req: Request, res: Response) => {
   const { title, content, senderId } = req.body;
   if (!title || !content || !senderId) {
