@@ -6,7 +6,7 @@ Content-Type: application/json
 {
     "title": "title",
     "content": "content",
-    "senderId": "Hilaa"
+    "owner": "Hilaa"
 }
 
 ### Get Post by ID
@@ -16,16 +16,16 @@ GET http://localhost:3000/post/67839f695f21a781fa13d1a4
 GET http://localhost:3000/post/all
 
 ### Get Posts by Sender
-GET http://localhost:3000/post/filter/bySender?senderId=Hila
+GET http://localhost:3000/post/filter/bySender?senderId=Hilaa
 
 ### Update a Post
-PUT http://localhost:3000/post/677fa63b98487887462b9980
+PUT http://localhost:3000/post/67839f695f21a781fa13d1a4
 Content-Type: application/json
 
 {
     "title": "Updated Title",
     "content": "Updated content",
-    "senderId": "Updated Owner"
+    "owner": "Updated Owner"
 }
 
 ### Delete a Post
