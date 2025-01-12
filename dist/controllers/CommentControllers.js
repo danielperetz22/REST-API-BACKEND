@@ -4,105 +4,68 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const CommentModel_1 = __importDefault(require("../models/CommentModel"));
-const PostModel_1 = __importDefault(require("../models/PostModel"));
-const createComment = async (req, res) => {
-    console.log('Attempting to create comment');
-    const { content, postId, owner } = req.body;
-    if (!content || !postId || !owner) {
-        res.status(400).json({ message: 'Content, postId, and owner are required' });
-        return;
+const baseController_1 = require("./baseController");
+class CommentController extends baseController_1.BaseController {
+    constructor() {
+        super(CommentModel_1.default);
     }
-    try {
-        const postExists = await PostModel_1.default.findById(postId);
-        if (!postExists) {
-            res.status(404).json({ message: 'Post not found' });
+    async gatAllCommentsByPostId(req, res) {
+        const postID = req.query.postId;
+        console.log("GET ALL COMMENTS ON SPECIFIC POST METHOD");
+        console.log(postID);
+        try {
+            const findAllComments = await CommentModel_1.default.find({ postId: postID });
+            if (findAllComments.length === 0) {
+                res.status(400).send("There are not comments on this post");
+                return;
+            }
+            else {
+                res.status(200).send(findAllComments);
+                return;
+            }
+        }
+        catch (error) {
+            res.status(400).send(error);
+        }
+    }
+    async updateComment(req, res) {
+        const commentID = req.params._id;
+        const newContent = req.body.comment;
+        try {
+            const commentToUpdate = await CommentModel_1.default.findByIdAndUpdate(commentID, { comment: newContent }, { new: true });
+            if (!commentToUpdate) {
+                res.status(404).send("COULD NOT UPDATE COMMENT DUE TO AN ERROR!");
+                return;
+            }
+            else {
+                res.status(200).send(commentToUpdate);
+                return;
+            }
+        }
+        catch (error) {
+            res.status(400).send(error);
             return;
         }
-        const newComment = new CommentModel_1.default({ content, postId, owner });
-        const savedComment = await newComment.save();
-        res.status(201).json(savedComment);
-        return;
     }
-    catch (error) {
-        res.status(500).json({ message: 'Error creating comment', error: String(error) });
-        return;
-    }
-};
-const getAllComments = (req, res) => {
-    console.log('Attempting to fetch all comments');
-    CommentModel_1.default.find()
-        .then((comments) => res.status(200).json(comments))
-        .catch((error) => {
-        res.status(500).json({ message: 'Error fetching comments', error: String(error) });
-    });
-};
-const getCommentsByPost = (req, res) => {
-    console.log('Attempting to fetch comments by post');
-    const { postId } = req.params;
-    CommentModel_1.default.find({ postId })
-        .then((comments) => res.status(200).json(comments))
-        .catch((error) => {
-        res.status(500).json({ message: 'Error fetching comments for post', error: String(error) });
-    });
-};
-const getCommentById = (req, res) => {
-    console.log('Attempting to fetch comment by ID');
-    const { commentId } = req.params;
-    CommentModel_1.default.findById(commentId)
-        .then((comment) => {
-        if (!comment) {
-            return res.status(404).json({ message: 'Comment not found' });
+    async deleteComment(req, res) {
+        const commentID = req.params._id;
+        try {
+            const theComment = await CommentModel_1.default.findByIdAndDelete({
+                _id: commentID,
+            });
+            if (!theComment) {
+                res.status(404).send("Could not delete comment due to an error");
+                return;
+            }
+            else {
+                res.status(200).send(theComment);
+                return;
+            }
         }
-        res.status(200).json(comment);
-    })
-        .catch((error) => {
-        res.status(500).json({ message: 'Error fetching comment', error: String(error) });
-    });
-};
-const updateComment = (req, res) => {
-    console.log('Attempting to update comment');
-    const { commentId } = req.params;
-    const { content, owner } = req.body;
-    if (!content || !owner) {
-        res.status(400).json({ message: 'Content and owner are required' });
-        return;
-    }
-    CommentModel_1.default.findByIdAndUpdate(commentId, { content, owner }, { new: true, runValidators: true })
-        .then((updatedComment) => {
-        if (!updatedComment) {
-            res.status(404).json({ message: 'Comment not found' });
+        catch (error) {
+            res.status(400).send(error);
             return;
         }
-        res.status(200).json(updatedComment);
-    })
-        .catch((error) => {
-        res.status(500).json({ message: 'Error updating comment', error: String(error) });
-    });
-};
-const deleteComment = async (req, res) => {
-    console.log('Attempting to delete comment');
-    const { commentId } = req.params;
-    try {
-        const deletedComment = await CommentModel_1.default.findByIdAndDelete(commentId);
-        if (!deletedComment) {
-            res.status(404).json({ message: 'Comment not found' });
-            return;
-        }
-        res.status(200).json({ message: 'Comment deleted successfully' });
-        return;
     }
-    catch (error) {
-        res.status(500).json({ message: 'Failed to delete comment', error: String(error) });
-        return;
-    }
-};
-const deleteAllComments = async (req, res) => {
-    try {
-        await CommentModel_1.default.deleteMany({});
-        res.status(200).json({ message: 'All comments deleted successfully' });
-    }
-    catch (error) {
-        res.status(500).json({ message: 'Error deleting all comments', error: String(error) });
-    }
-};
-exports.default = { createComment, getAllComments, getCommentsByPost, getCommentById, updateComment, deleteComment, deleteAllComments };
+}
+exports.default = new CommentController();

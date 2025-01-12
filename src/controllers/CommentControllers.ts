@@ -1,119 +1,71 @@
 import { Request, Response } from 'express'; 
-import Comment from '../models/CommentModel';
-import Post from '../models/PostModel';
+import Comment,{IComment} from '../models/CommentModel';
+import { BaseController } from './baseController';
 
-const createComment = async (req: Request, res: Response) => {
-  console.log('Attempting to create comment');
-  const { content, postId, owner } = req.body;
-
-  if (!content || !postId || !owner) {
-     res.status(400).json({ message: 'Content, postId, and owner are required' });
-      return
+class CommentController extends BaseController<IComment> {
+  constructor() {
+    super(Comment);
   }
 
-  try {
-    const postExists = await Post.findById(postId);
-    if (!postExists) {
-       res.status(404).json({ message: 'Post not found' });
-        return
-    }
-    const newComment = new Comment({ content, postId, owner });
-    const savedComment = await newComment.save();
-
-     res.status(201).json(savedComment);
-      return
-  } catch (error: any) {
-     res.status(500).json({ message: 'Error creating comment', error: String(error) });
-      return
-  }
-};
-
-const getAllComments = (req: Request, res: Response) => {
-  console.log('Attempting to fetch all comments');
-  Comment.find()
-    .then((comments) => res.status(200).json(comments))
-    .catch((error: any) => {
-      res.status(500).json({ message: 'Error fetching comments', error: String(error) });
-    });
-};
-
-const getCommentsByPost = (req: Request, res: Response) => {
-  console.log('Attempting to fetch comments by post');
-  const { postId } = req.params;
-
-  Comment.find({ postId })
-    .then((comments) => res.status(200).json(comments))
-    .catch((error: any) => {
-      res.status(500).json({ message: 'Error fetching comments for post', error: String(error) });
-    });
-};
-
-const getCommentById = (req: Request, res: Response) => {
-  console.log('Attempting to fetch comment by ID');
-  const { commentId } = req.params;
-
-  Comment.findById(commentId)
-    .then((comment) => {
-      if (!comment) {
-        return res.status(404).json({ message: 'Comment not found' });
+  async gatAllCommentsByPostId(req: Request, res: Response) {
+    const postID = req.query.postId;
+    console.log("GET ALL COMMENTS ON SPECIFIC POST METHOD");
+    console.log(postID);
+    try {
+      const findAllComments = await Comment.find({ postId: postID });
+      if (findAllComments.length === 0) {
+        res.status(400).send("There are not comments on this post");
+        return;
+      } else {
+        res.status(200).send(findAllComments);
+        return;
       }
-      res.status(200).json(comment);
-    })
-    .catch((error: any) => {
-      res.status(500).json({ message: 'Error fetching comment', error: String(error) });
-    });
-};
-
-const updateComment = (req: Request, res: Response) => {
-  console.log('Attempting to update comment');
-  const { commentId } = req.params;
-  const { content, owner } = req.body;
-
-  if (!content || !owner) {
-     res.status(400).json({ message: 'Content and owner are required' });
-      return
-  }
-
-  Comment.findByIdAndUpdate(commentId, { content, owner }, { new: true, runValidators: true })
-    .then((updatedComment) => {
-      if (!updatedComment) {
-         res.status(404).json({ message: 'Comment not found' });
-          return
-      }
-      res.status(200).json(updatedComment);
-    })
-    .catch((error: any) => {
-      res.status(500).json({ message: 'Error updating comment', error: String(error) });
-    });
-};
-
-const deleteComment = async (req: Request, res: Response) => {
-  console.log('Attempting to delete comment');
-  const { commentId } = req.params;
-
-  try {
-    const deletedComment = await Comment.findByIdAndDelete(commentId);
-
-    if (!deletedComment) {
-       res.status(404).json({ message: 'Comment not found' });
-        return
+    } catch (error) {
+      res.status(400).send(error);
     }
-
-   res.status(200).json({ message: 'Comment deleted successfully' });
-   return
-  } catch (error) {
-     res.status(500).json({ message: 'Failed to delete comment', error: String(error) });
-     return
   }
-};
 
-const deleteAllComments = async (req: Request, res: Response) => {
-  try{
-    await Comment.deleteMany({});
-    res.status(200).json({ message: 'All comments deleted successfully' });
-  }catch(error){
-    res.status(500).json({ message: 'Error deleting all comments', error: String(error) });
+  async updateComment(req: Request, res: Response) {
+    const commentID = req.params._id;
+    const newContent = req.body.comment;
+    try {
+      const commentToUpdate = await Comment.findByIdAndUpdate(
+        commentID,
+        { comment: newContent },
+        { new: true }
+      );
+      if (!commentToUpdate) {
+        res.status(404).send("COULD NOT UPDATE COMMENT DUE TO AN ERROR!");
+        return;
+      } else {
+        res.status(200).send(commentToUpdate);
+        return;
+      }
+    } catch (error) {
+      res.status(400).send(error);
+      return;
+    }
   }
-};
 
-export default { createComment, getAllComments, getCommentsByPost, getCommentById, updateComment, deleteComment,deleteAllComments };
+  async deleteComment(req: Request, res: Response) {
+    const commentID = req.params._id;
+    try {
+      const theComment = await Comment.findByIdAndDelete({
+        _id: commentID,
+      });
+      if (!theComment) {
+        res.status(404).send("Could not delete comment due to an error");
+        return;
+      } else {
+        res.status(200).send(theComment);
+        return;
+      }
+    } catch (error) {
+      res.status(400).send(error);
+      return;
+    }
+  }
+
+
+}
+export default new CommentController();

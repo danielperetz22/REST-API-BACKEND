@@ -1,145 +1,372 @@
+// import { Request, Response, NextFunction } from 'express';
+// import jwt from 'jsonwebtoken';
+// import bcrypt from 'bcrypt';
+// import User from '../models/AuthModel';
+
+
+// declare global {
+//   namespace Express {
+//     interface Request {
+//       user?: any;
+//     }
+//   }
+// }
+
+// const register = async (req: Request, res: Response) => {
+//   const { username, email, password } = req.body;
+
+//   if (!username || !email || !password ||
+//      username.trim().length ==0 || email.trim().length ==0 || password.trim().length ==0 
+//    ) {
+//     res.status(400).json({ message: 'Username, email, and password are required' });
+//     return;
+//   }
+
+//   const existingUser = await User.findOne({
+//     $or: [{ username }, { email }]
+//   });
+
+//   if (existingUser) {
+//     if (existingUser.email === email) {
+//       res.status(400).json({ message: 'Email already in use' });
+//       return;
+//     }
+//     else if (existingUser.username === username) {
+//       res.status(400).json({ message: 'Username already in use' });
+//       return;
+//     }
+//   }
+
+//   try {
+//     const salt = await bcrypt.genSalt(10);
+//     const hashedPassword = await bcrypt.hash(password, salt);
+//     const newUser = User.create({ username, email, password: hashedPassword });
+//     console.log(newUser);
+//     res.status(201).json(newUser);
+//     return;
+//   } catch (err) {
+//     res.status(500).json({ message: 'Internal server error' });
+//     return;
+//   }
+// };
+
+// const login = async (req: Request, res: Response) => {
+//   const { username, email, password } = req.body;
+
+//   if (!username || !email || !password ||
+//     username.trim().length ==0 || email.trim().length ==0 || password.trim().length ==0 
+//   )  {
+//     res.status(400).json({ message: 'Username or email and password are required' });
+//     return;
+//   }
+
+//   try {
+//     const user = await User.findOne({
+//       $or: [{ username }, { email }]
+//     });
+
+//     if (!user) {
+//       res.status(400).json({ message: 'Invalid username or email' });
+//       return;
+//     }
+
+//     const isMatch = await bcrypt.compare(password, user.password);
+
+//     if (!isMatch) {
+//       res.status(400).json({ message: 'Invalid password' });
+//       return;
+//     }
+
+//     const accessToken = jwt.sign(
+//       { id: user._id },
+//       process.env.ACCESS_TOKEN_SECRET as string,
+//       { expiresIn: process.env.JWT_TOKEN_EXPIRATION }
+//     );
+
+//     res.status(200).json({ accessToken });
+//     return;
+//   } catch (err) {
+//     console.error('Error during login:', err);
+//     res.status(500).json({ message: 'Internal server error' });
+//     return;
+//   }
+// };
+
+// const AuthMiddleware = (req: Request, res: Response, next: NextFunction) => {
+//   const authHeader = req.headers['authorization'];
+//   const token = authHeader && authHeader.split(' ')[1];
+
+//   if (!token) {
+//     res.status(401).json({ message: 'Authorization token is missing' });
+//     return;
+//   }
+
+//   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string, (err, decoded) => {
+//     if (err) {
+//       res.status(403).json({ message: 'Invalid or expired token', error: err.message });
+//       return;
+//     }
+
+//     req.user = decoded;
+//     next();
+//   });
+// };
+
+// const validateToken = (req: Request, res: Response) => {
+//   try {
+//     const authHeader = req.header('Authorization');
+
+//     if (!authHeader) {
+//       res.status(401).json({ message: 'Authorization header is missing' });
+//       return;
+//     }
+
+//     if (!authHeader.startsWith('Bearer ')) {
+//       res.status(401).json({ message: 'Invalid Authorization format' });
+//       return;
+//     }
+
+//     const token = authHeader.split(' ')[1];
+
+//     if (!token) {
+//       res.status(401).json({ message: 'Token is missing' });
+//       return;
+//     }
+
+//     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string);
+
+//     res.status(200).json({ message: 'Token is valid', decoded });
+//     return;
+//   } catch (err) {
+//     console.error('Token validation error:', err);
+//     res.status(401).json({ message: 'Invalid or expired token' });
+//     return;
+//   }
+// };
+
+// export default { register, login, AuthMiddleware, validateToken };
+
+
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import User from '../models/AuthModel';
-
+import userModel, { IUser } from "../models/AuthModel";
+import { Document } from "mongoose";
 
 declare global {
   namespace Express {
-    interface Request {
+    interface Request { 
       user?: any;
     }
   }
 }
 
+const generateTokens = (_id : string): { refreshToken: string; accessToken: string } | null => {
+  if (process.env.TOKEN_SECRET===undefined) {
+    return null;
+  }
+  const rand = Math.random();
+  const accessToken = jwt.sign(
+    { _id: _id, rand: rand },
+    process.env.TOKEN_SECRET,
+    { expiresIn: process.env.TOKEN_EXPIRATION }
+  );
+
+  const refreshToken = jwt.sign(
+    { _id: _id, rand:rand },
+    process.env.TOKEN_SECRET,
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION }
+  );
+
+  return { refreshToken:refreshToken, accessToken:accessToken };
+};
+
 const register = async (req: Request, res: Response) => {
   const { username, email, password } = req.body;
 
   if (!username || !email || !password) {
-    res.status(400).json({ message: 'Username, email, and password are required' });
+    res.status(400).json({ message: "All fields (username, email, and password) are required" });
     return;
   }
-
-  const existingUser = await User.findOne({
-    $or: [{ username }, { email }]
-  });
-
-  if (existingUser) {
-    if (existingUser.email === email) {
-      res.status(400).json({ message: 'Email already in use' });
-      return;
-    }
-
-    if (existingUser.username === username) {
-      res.status(400).json({ message: 'Username already in use' });
-      return;
-    }
+  try {
+    const existingUser = await userModel.findOne({$or: [{ username }, { email }],});
+    if (existingUser) {
+      const errorMessage =
+      existingUser.email === email
+        ? "Email is already in use"
+        : "Username already in use";
+     res.status(400).send({ error: errorMessage });
+     return;
   }
 
-  try {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    const newUser = new User({ username, email, password: hashedPassword });
-    await newUser.save();
 
-    res.status(201).json(newUser);
+    const user: IUser = await userModel.create({
+      username,
+      email,
+      password: hashedPassword,
+    });
+     res.status(201).send({
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+    });
     return;
   } catch (err) {
-    res.status(500).json({ message: 'Internal server error' });
+    console.log(err);
+    res.status(400);
     return;
   }
 };
 
 const login = async (req: Request, res: Response) => {
-  const { username, email, password } = req.body;
-
-  if ((!username && !email) || !password) {
-    res.status(400).json({ message: 'Username or email and password are required' });
-    return;
-  }
-
+  const username = req.body.username;
+  const email = req.body.email;
+  const password = req.body.password;
   try {
-    const user = await User.findOne({
-      $or: [{ username }, { email }]
-    });
-
-    if (!user) {
-      res.status(400).json({ message: 'Invalid username or email' });
+    if ((!username && !email) || !password) {
+      res.status(400).json({ message: "Username or email and password are required" });
       return;
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const user = await userModel.findOne({ $or: [{ username }, { email }] });
+if (!user) {
+  const errorMessage =
+    !username && !email
+      ? "Username and email are required"
+      : !username
+      ? "Invalid username"
+      : !email
+      ? "Invalid email"
+      : "Invalid username, email, or password";
+  res.status(400).json({ message: errorMessage });
+  return;
+}
 
-    if (!isMatch) {
-      res.status(400).json({ message: 'Invalid password' });
+    
+
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      res.status(400).json({ message: "Invalid username, email, or password" });
       return;
     }
 
-    const accessToken = jwt.sign(
-      { id: user._id },
-      process.env.ACCESS_TOKEN_SECRET as string,
-      { expiresIn: process.env.JWT_TOKEN_EXPIRATION }
-    );
+    const tokens = generateTokens(user._id as string);
+    if (!tokens) {
+      res.status(500).json({ message: "Failed to generate tokens" });
+      return;
+    }
 
-    res.status(200).json({ accessToken });
-    return;
+    if (user.refeshtokens == undefined) {
+      user.refeshtokens = [];
+    }
+    user.refeshtokens.push(tokens.refreshToken);
+    user.save();
+    res.status(200).json({ ...tokens, _Id: user._id });
   } catch (err) {
-    console.error('Error during login:', err);
-    res.status(500).json({ message: 'Internal server error' });
-    return;
+    res.status(400).json({ message: "Error during login", error: err });
   }
 };
 
-const AuthMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
 
-  if (!token) {
-    res.status(401).json({ message: 'Authorization token is missing' });
-    return;
+const validateRefreshToken = (refreshToken: string | undefined) => {
+  return new Promise<Document<unknown, {}, IUser> & IUser>((resolve, reject) => {
+    if (refreshToken == null) {
+      reject("error");
+      return;
+    }
+  if (!process.env.TOKEN_SECRET) {
+    reject("error");
+      return;
   }
 
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string, (err, decoded) => {
+  jwt.verify(refreshToken, process.env.TOKEN_SECRET, async (err: any, payload: any) => {
     if (err) {
-      res.status(403).json({ message: 'Invalid or expired token', error: err.message });
+      reject(err);
       return;
     }
-
-    req.user = decoded;
-    next();
+    const userId = (payload as Payload)._id;
+    try {
+      const user = await userModel.findById(userId);
+      if (!user) {
+        reject("error");
+        return;
+      }
+      //check if token exists
+      if (!user.refeshtokens || !user.refeshtokens.includes(refreshToken)) {
+        user.refeshtokens = [];
+        await user.save();
+        reject(err);
+        return;
+      }
+      resolve(user);
+    } catch (err) {
+      reject(err);
+    }
   });
-};
+});
+}
+type Payload = {
+  _id: string;
+}
 
-const validateToken = (req: Request, res: Response) => {
+const refresh = async (req: Request, res: Response) => {
   try {
-    const authHeader = req.header('Authorization');
+    const user = await validateRefreshToken(req.body.refreshToken);
 
-    if (!authHeader) {
-      res.status(401).json({ message: 'Authorization header is missing' });
+    const tokens = generateTokens(user._id as string);
+    if (!tokens) {
+      res.status(400).send("error");
       return;
     }
-
-    if (!authHeader.startsWith('Bearer ')) {
-      res.status(401).json({ message: 'Invalid Authorization format' });
-      return;
-    }
-
-    const token = authHeader.split(' ')[1];
-
-    if (!token) {
-      res.status(401).json({ message: 'Token is missing' });
-      return;
-    }
-
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string);
-
-    res.status(200).json({ message: 'Token is valid', decoded });
-    return;
+    user.refeshtokens = user.refeshtokens!.filter((token) => token !== req.body.refreshToken);
+    user.refeshtokens.push(tokens.refreshToken);
+    await user.save();
+    res.status(200).send({
+      ...tokens,
+      _id: user._id
+    });
   } catch (err) {
-    console.error('Token validation error:', err);
-    res.status(401).json({ message: 'Invalid or expired token' });
-    return;
+    res.status(400).send("error");
   }
 };
 
-export default { register, login, AuthMiddleware, validateToken };
+const logout = async (req: Request, res: Response) => {
+  try {
+    const user = await validateRefreshToken(req.body.refreshToken);
+    if (!user) {
+      res.status(400).send("error");
+      return;
+    }
+    //remove the token from the user
+    user.refeshtokens = user.refeshtokens!.filter((token) => token !== req.body.refreshToken);
+    await user.save();
+    res.status(200).send("logged out");
+  } catch (err) {
+    res.status(400).send("error");
+    return;
+  }
+};
+export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  const tokenHeader = req.headers["authorization"];
+  const token = tokenHeader && tokenHeader.split(" ")[1];
+  if (!token) {
+    res.status(400).send("Access denied");
+    return;
+  }
+  if (process.env.TOKEN_SECRET === undefined) {
+    res.status(400).send("server error");
+    return;
+  }
+  jwt.verify(token, process.env.TOKEN_SECRET, (err, payload) => {
+    if (err) {
+      res.status(400).send("Access denied");
+    } else {
+      const userId = (payload as Payload)._id;
+      req.params.userId = userId;
+      next();
+    }
+  });
+}
+export default {register,login,refresh,logout,authMiddleware};
