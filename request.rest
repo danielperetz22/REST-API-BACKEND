@@ -10,7 +10,7 @@ Content-Type: application/json
 }
 
 ### Get Post by ID
-GET http://localhost:3000/post/6780eee9b8af99ae8ce4deed
+GET http://localhost:3000/post/67839f695f21a781fa13d1a4
 
 ### Get All Posts
 GET http://localhost:3000/post/all
