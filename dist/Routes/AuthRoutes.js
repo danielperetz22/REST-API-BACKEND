@@ -9,5 +9,5 @@ const AuthControllers_1 = __importDefault(require("../controllers/AuthController
 router.post('/register', AuthControllers_1.default.register);
 router.post('/login', AuthControllers_1.default.login);
 router.post('/logout', AuthControllers_1.default.logout);
-router.get('/refresh', AuthControllers_1.default.refresh);
+router.post('/refresh', AuthControllers_1.default.refresh);
 exports.default = router;

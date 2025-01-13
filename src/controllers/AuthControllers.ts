@@ -231,21 +231,10 @@ const login = async (req: Request, res: Response) => {
     }
 
     const user = await userModel.findOne({ $or: [{ username }, { email }] });
-if (!user) {
-  const errorMessage =
-    !username && !email
-      ? "Username and email are required"
-      : !username
-      ? "Invalid username"
-      : !email
-      ? "Invalid email"
-      : "Invalid username, email, or password";
-  res.status(400).json({ message: errorMessage });
-  return;
-}
-
-    
-
+    if (!user) {
+      res.status(400).json({ message: "Invalid username, email, or password" });
+      return;
+    }
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
       res.status(400).json({ message: "Invalid username, email, or password" });
