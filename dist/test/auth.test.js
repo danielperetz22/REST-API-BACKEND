@@ -29,15 +29,10 @@ describe('Auth Tests', () => {
         const user = await AuthModel_1.default.findOne({ email: userInfo.email });
         expect(user).not.toBeNull();
     });
-    test('Auth Register with existing email', async () => {
-        await (0, supertest_1.default)(app).post('/auth/register').send(userInfo);
-        const response = await (0, supertest_1.default)(app).post('/auth/register').send({
-            username: 'dan',
-            email: userInfo.email,
-            password: '123456',
-        });
+    test("should not allow duplicate registration with the same email", async () => {
+        const response = await (0, supertest_1.default)(app).post("/auth/register").send(userInfo);
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('Email already in use');
+        expect(response.body.error).toBe("Email is already in use");
     });
     test('Auth Register with existing username', async () => {
         await (0, supertest_1.default)(app).post('/auth/register').send(userInfo);
@@ -56,7 +51,7 @@ describe('Auth Tests', () => {
             password: '123456',
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('Username, email, and password are required');
+        expect(response.body.message).toBe('All fields (username, email, and password) are required');
     });
     test('Auth Register without password', async () => {
         const response = await (0, supertest_1.default)(app).post('/auth/register').send({
@@ -65,7 +60,7 @@ describe('Auth Tests', () => {
             password: '',
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('Username, email, and password are required');
+        expect(response.body.message).toBe('All fields (username, email, and password) are required');
     });
     test('Auth Register without email', async () => {
         const response = await (0, supertest_1.default)(app).post('/auth/register').send({
@@ -74,14 +69,14 @@ describe('Auth Tests', () => {
             password: '123456',
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('Username, email, and password are required');
+        expect(response.body.message).toBe('All fields (username, email, and password) are required');
     });
     test('Registration fails when required fields are missing', async () => {
         const response = await (0, supertest_1.default)(app).post('/auth/register').send({
             username: 'testuser',
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('Username, email, and password are required');
+        expect(response.body.message).toBe('All fields (username, email, and password) are required');
     });
     test('Auth Login with valid username and password', async () => {
         await (0, supertest_1.default)(app).post('/auth/register').send(userInfo);
@@ -107,7 +102,7 @@ describe('Auth Tests', () => {
             password: userInfo.password
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('Invalid username or email');
+        expect(response.body.message).toBe('Invalid username, email, or password');
     });
     test('Auth Login with non-existing email', async () => {
         await (0, supertest_1.default)(app).post('/auth/register').send(userInfo);
@@ -116,7 +111,7 @@ describe('Auth Tests', () => {
             password: userInfo.password,
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe("Invalid username or email");
+        expect(response.body.message).toBe("Invalid username, email, or password");
     });
     test('Auth Login with invalid password', async () => {
         await (0, supertest_1.default)(app).post('/auth/register').send(userInfo);
@@ -125,7 +120,7 @@ describe('Auth Tests', () => {
             password: 'wrongpassword'
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('Invalid password');
+        expect(response.body.message).toBe('Invalid username, email, or password');
     });
     test('Login fails when username or email and password are missing', async () => {
         const response = await (0, supertest_1.default)(app).post('/auth/login').send({
@@ -141,7 +136,7 @@ describe('Auth Tests', () => {
             password: '123456',
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('Invalid username or email');
+        expect(response.body.message).toBe('Invalid username, email, or password');
     });
     test('Login fails with invalid password', async () => {
         await AuthModel_1.default.deleteMany({});
@@ -155,7 +150,7 @@ describe('Auth Tests', () => {
             password: 'wrongpassword',
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('Invalid password');
+        expect(response.body.message).toBe('Invalid username, email, or password');
     });
     test('Token validation - valid token', async () => {
         await AuthModel_1.default.deleteMany({});

@@ -1,6 +1,5 @@
 import express , {Request,Response} from 'express';
 import CommentControllers from '../controllers/CommentControllers';
-import { post } from 'jquery';
 
 const router = express.Router();
 

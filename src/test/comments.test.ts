@@ -2,7 +2,8 @@ import request from "supertest";
 import initApp from "../server";
 import mongoose from "mongoose";
 import CommentModel from "../models/CommentModel";
-import { Express, response } from "express";
+import AuthModel from "../models/AuthModel";
+import { Express} from "express";
 import PostModel from "../models/PostModel";
 
   let app :Express;

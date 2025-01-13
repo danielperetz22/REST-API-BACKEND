@@ -162,19 +162,19 @@ declare global {
 }
 
 const generateTokens = (_id : string): { refreshToken: string; accessToken: string } | null => {
-  if (process.env.TOKEN_SECRET===undefined) {
+  if (process.env.ACCESS_TOKEN_SECRET===undefined) {
     return null;
   }
   const rand = Math.random();
   const accessToken = jwt.sign(
     { _id: _id, rand: rand },
-    process.env.TOKEN_SECRET,
+    process.env.ACCESS_TOKEN_SECRET,
     { expiresIn: process.env.TOKEN_EXPIRATION }
   );
 
   const refreshToken = jwt.sign(
     { _id: _id, rand:rand },
-    process.env.TOKEN_SECRET,
+    process.env.ACCESS_TOKEN_SECRET,
     { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION }
   );
 
@@ -257,7 +257,7 @@ if (!user) {
       res.status(500).json({ message: "Failed to generate tokens" });
       return;
     }
-
+    console.log("Generated Access Token:", tokens.accessToken);
     if (user.refeshtokens == undefined) {
       user.refeshtokens = [];
     }
@@ -267,6 +267,7 @@ if (!user) {
   } catch (err) {
     res.status(400).json({ message: "Error during login", error: err });
   }
+
 };
 
 
@@ -276,12 +277,12 @@ const validateRefreshToken = (refreshToken: string | undefined) => {
       reject("error");
       return;
     }
-  if (!process.env.TOKEN_SECRET) {
+  if (!process.env.ACCESS_TOKEN_SECRET) {
     reject("error");
       return;
   }
 
-  jwt.verify(refreshToken, process.env.TOKEN_SECRET, async (err: any, payload: any) => {
+  jwt.verify(refreshToken, process.env.ACCESS_TOKEN_SECRET, async (err: any, payload: any) => {
     if (err) {
       reject(err);
       return;
@@ -352,21 +353,22 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
   const tokenHeader = req.headers["authorization"];
   const token = tokenHeader && tokenHeader.split(" ")[1];
   if (!token) {
-    res.status(400).send("Access denied");
+    res.status(400).send("Access denied: Missing token");
     return;
   }
-  if (process.env.TOKEN_SECRET === undefined) {
-    res.status(400).send("server error");
+  if (process.env.ACCESS_TOKEN_SECRET === undefined) {
+    res.status(500).send("Server error: Missing token secret");
     return;
   }
-  jwt.verify(token, process.env.TOKEN_SECRET, (err, payload) => {
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, payload) => {
     if (err) {
-      res.status(400).send("Access denied");
+      res.status(400).send("Access denied: Invalid token");
     } else {
-      const userId = (payload as Payload)._id;
-      req.params.userId = userId;
+      req.user = { _id: (payload as Payload)._id }; 
       next();
     }
   });
-}
-export default {register,login,refresh,logout,authMiddleware};
+};
+
+
+export default {register,login,refresh,logout,};

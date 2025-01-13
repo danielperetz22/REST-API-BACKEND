@@ -11,11 +11,16 @@ class PostController extends baseController_1.BaseController {
     }
     async updatePost(req, res) {
         const askerID = req.params._id;
+        const newtitle = req.body.title;
         const newContent = req.body.content;
         try {
-            const postToUpdate = await PostModel_1.default.findByIdAndUpdate(askerID, { content: newContent }, { new: true });
+            const postToUpdate = await PostModel_1.default.findByIdAndUpdate(askerID, { title: newtitle, content: newContent }, { new: true });
+            if (!newtitle || !newContent) {
+                res.status(400).send("Missing Data");
+                return;
+            }
             if (!postToUpdate) {
-                res.status(404).send("COULDNT FIND POST! DUE TO AN ERROR");
+                res.status(404).send("could not find post");
                 return;
             }
             else {
@@ -29,7 +34,8 @@ class PostController extends baseController_1.BaseController {
         }
     }
     async create(req, res) {
-        const userId = req.query.userId;
+        var _a;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id; // קבלת userId מתוך req.user
         if (!userId) {
             res.status(403).send("Unauthorized");
             return;

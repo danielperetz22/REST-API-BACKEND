@@ -12,12 +12,12 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const AuthModel_1 = __importDefault(require("../models/AuthModel"));
 const generateTokens = (_id) => {
-    if (process.env.TOKEN_SECRET === undefined) {
+    if (process.env.ACCESS_TOKEN_SECRET === undefined) {
         return null;
     }
     const rand = Math.random();
-    const accessToken = jsonwebtoken_1.default.sign({ _id: _id, rand: rand }, process.env.TOKEN_SECRET, { expiresIn: process.env.TOKEN_EXPIRATION });
-    const refreshToken = jsonwebtoken_1.default.sign({ _id: _id, rand: rand }, process.env.TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION });
+    const accessToken = jsonwebtoken_1.default.sign({ _id: _id, rand: rand }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.TOKEN_EXPIRATION });
+    const refreshToken = jsonwebtoken_1.default.sign({ _id: _id, rand: rand }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION });
     return { refreshToken: refreshToken, accessToken: accessToken };
 };
 const register = async (req, res) => {
@@ -86,6 +86,7 @@ const login = async (req, res) => {
             res.status(500).json({ message: "Failed to generate tokens" });
             return;
         }
+        console.log("Generated Access Token:", tokens.accessToken);
         if (user.refeshtokens == undefined) {
             user.refeshtokens = [];
         }
@@ -103,11 +104,11 @@ const validateRefreshToken = (refreshToken) => {
             reject("error");
             return;
         }
-        if (!process.env.TOKEN_SECRET) {
+        if (!process.env.ACCESS_TOKEN_SECRET) {
             reject("error");
             return;
         }
-        jsonwebtoken_1.default.verify(refreshToken, process.env.TOKEN_SECRET, async (err, payload) => {
+        jsonwebtoken_1.default.verify(refreshToken, process.env.ACCESS_TOKEN_SECRET, async (err, payload) => {
             if (err) {
                 reject(err);
                 return;
@@ -172,23 +173,22 @@ const authMiddleware = (req, res, next) => {
     const tokenHeader = req.headers["authorization"];
     const token = tokenHeader && tokenHeader.split(" ")[1];
     if (!token) {
-        res.status(400).send("Access denied");
+        res.status(400).send("Access denied: Missing token");
         return;
     }
-    if (process.env.TOKEN_SECRET === undefined) {
-        res.status(400).send("server error");
+    if (process.env.ACCESS_TOKEN_SECRET === undefined) {
+        res.status(500).send("Server error: Missing token secret");
         return;
     }
-    jsonwebtoken_1.default.verify(token, process.env.TOKEN_SECRET, (err, payload) => {
+    jsonwebtoken_1.default.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, payload) => {
         if (err) {
-            res.status(400).send("Access denied");
+            res.status(400).send("Access denied: Invalid token");
         }
         else {
-            const userId = payload._id;
-            req.params.userId = userId;
+            req.user = { _id: payload._id };
             next();
         }
     });
 };
 exports.authMiddleware = authMiddleware;
-exports.default = { register, login, refresh, logout, authMiddleware: exports.authMiddleware };
+exports.default = { register, login, refresh, logout, };

@@ -23,7 +23,9 @@ class BaseController {
         }
     }
     async getAll(req, res) {
+        console.log("Query parameters:", req.query);
         const ownerFilter = req.query.owner;
+        console.log("Owner Filter", ownerFilter);
         try {
             if (ownerFilter) {
                 const Items = await this.model.find({ owner: ownerFilter });
@@ -47,9 +49,10 @@ class BaseController {
     }
     async getById(req, res) {
         const askedID = req.params._id;
-        console.log("GET BY ID");
+        console.log("Get By Id", askedID);
         try {
             const Item = await this.model.findById(askedID);
+            console.log("Item is", Item);
             if (!Item) {
                 res.status(404).send("COULDNT FIND DUE TO AN ERROR");
                 return;
