@@ -5,6 +5,8 @@ import postRoutes from './Routes/PostsRoutes';
 import CommentRoutes from './Routes/CommentRoutes';
 import AuthRoutes from './Routes/AuthRoutes';
 import bodyParser from "body-parser";
+import swaggerJsdoc from "swagger-jsdoc";
+import swaggerUi from "swagger-ui-express";
 
 dotenv.config();
 const app = express();
@@ -23,10 +25,14 @@ const options = {
       version: "1.0.0",
       description: "REST server including authentication using JWT",
     },
-    servers: [{ url: "http://localhost:3000" }],
+    servers: [{ url: "http://localhost:"+ process.env.PORT }],
   },
   apis: ["./src/Routes/*.ts"],
 };
+const specs = swaggerJsdoc(options);
+app.use("/api-docs",swaggerUi.serve,swaggerUi.setup(specs));
+
+
 
 const initApp = async (): Promise<Express> => {
   return new Promise<Express>((resolve, reject) => {
@@ -42,7 +48,6 @@ const initApp = async (): Promise<Express> => {
 
     if (!process.env.MONGO_URI) {
       console.error("initApplication UNDEFINED MONGO_URI");
-      // Reject with a descriptive error message
       reject(new Error("MONGO_URI is not defined in the environment variables"));
       return;
     } else {
