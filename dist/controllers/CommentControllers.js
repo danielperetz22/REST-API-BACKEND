@@ -32,7 +32,7 @@ class CommentController extends baseController_1.BaseController {
         const commentID = req.params._id;
         const newContent = req.body.comment;
         try {
-            const commentToUpdate = await CommentModel_1.default.findByIdAndUpdate(commentID, { comment: newContent }, { new: true });
+            const commentToUpdate = await CommentModel_1.default.findByIdAndUpdate(commentID, { content: newContent }, { new: true });
             if (!commentToUpdate) {
                 res.status(404).send("COULD NOT UPDATE COMMENT DUE TO AN ERROR!");
                 return;

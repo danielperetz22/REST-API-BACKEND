@@ -31,7 +31,7 @@ class CommentController extends BaseController<IComment> {
     try {
       const commentToUpdate = await Comment.findByIdAndUpdate(
         commentID,
-        { comment: newContent },
+        { content: newContent },
         { new: true }
       );
       if (!commentToUpdate) {

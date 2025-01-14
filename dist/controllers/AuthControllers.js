@@ -1,8 +1,4 @@
 "use strict";
-// import { Request, Response, NextFunction } from 'express';
-// import jwt from 'jsonwebtoken';
-// import bcrypt from 'bcrypt';
-// import User from '../models/AuthModel';
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -79,7 +75,7 @@ const login = async (req, res) => {
             res.status(500).json({ message: "Failed to generate tokens" });
             return;
         }
-        console.log("Generated Access Token:", tokens.accessToken);
+        //console.log("Generated Access Token:", tokens.accessToken);
         if (user.refeshtokens == undefined) {
             user.refeshtokens = [];
         }

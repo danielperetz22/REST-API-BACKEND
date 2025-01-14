@@ -7,7 +7,6 @@ const supertest_1 = __importDefault(require("supertest"));
 const server_1 = __importDefault(require("../server"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const PostModel_1 = __importDefault(require("../models/PostModel"));
-const AuthModel_1 = __importDefault(require("../models/AuthModel"));
 let app;
 let postId = '';
 const userInfo = {
@@ -18,10 +17,9 @@ const userInfo = {
 beforeAll(async () => {
     app = await (0, server_1.default)();
     await PostModel_1.default.deleteMany();
-    await AuthModel_1.default.deleteMany();
+    // await AuthModel.deleteMany();
     await (0, supertest_1.default)(app).post("/auth/register").send(userInfo);
     const response = await (0, supertest_1.default)(app).post("/auth/login").send(userInfo);
-    console.log("Login response:", response.body);
     userInfo._id = response.body._id || response.body._Id;
     userInfo.accessToken = response.body.accessToken;
     userInfo.refreshToken = response.body.refreshToken;
@@ -43,7 +41,6 @@ describe("Posts test suite", () => {
             title: "title",
             content: "content",
         });
-        console.log(response.body);
         postId = response.body._id;
         expect(response.status).toBe(201);
         expect(response.body.title).toBe("title");
@@ -65,7 +62,6 @@ describe("Posts test suite", () => {
         expect(response.body).toHaveLength(1);
     });
     test("Test get post by id", async () => {
-        console.log("post ID:", postId);
         const response = await (0, supertest_1.default)(app).get(`/post/` + postId);
         expect(response.status).toBe(200);
         expect(response.body.title).toBe("title");
@@ -78,13 +74,11 @@ describe("Posts test suite", () => {
     });
     test("Test get post by owner", async () => {
         const response = await (0, supertest_1.default)(app).get(`/post/all?owner=${userInfo._id}`);
-        console.log("Request sent to /post/all with owner:", userInfo._id);
         expect(response.status).toBe(200);
         expect(response.body).toHaveLength(1);
     });
     test("Test fail to get post by owner", async () => {
         const response = await (0, supertest_1.default)(app).get(`/post/all?owner=123456`);
-        console.log("Request sent to /post/all with owner: 123456");
         expect(response.status).toBe(404);
     });
     test("Test update post", async () => {
@@ -98,6 +92,18 @@ describe("Posts test suite", () => {
         expect(response.status).toBe(200);
         expect(response.body.title).toBe("updated title");
         expect(response.body.content).toBe("updated content");
+    });
+    test("Test update post with non-existing ID'", async () => {
+        const fakeId = new mongoose_1.default.Types.ObjectId().toString();
+        const response = await (0, supertest_1.default)(app)
+            .put(`/post/${fakeId}`)
+            .set("Authorization", "jwt " + userInfo.accessToken)
+            .send({
+            title: "Doesn't matter",
+            content: "Because post is not found",
+        });
+        expect(response.status).toBe(404);
+        expect(response.text).toBe("could not find post");
     });
     test("Test fail to update post", async () => {
         const response = await (0, supertest_1.default)(app).put(`/post/` + postId).set({

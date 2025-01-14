@@ -29,7 +29,7 @@ const options = {
 };
 
 const initApp = async (): Promise<Express> => {
-return new Promise<Express>((resolve, reject) => {
+  return new Promise<Express>((resolve, reject) => {
     const db = mongoose.connection;
 
     db.on("error", (error) => {
@@ -42,15 +42,22 @@ return new Promise<Express>((resolve, reject) => {
 
     if (!process.env.MONGO_URI) {
       console.error("initApplication UNDEFINED MONGO_URI");
-      reject();
+      // Reject with a descriptive error message
+      reject(new Error("MONGO_URI is not defined in the environment variables"));
       return;
     } else {
-      mongoose.connect(process.env.MONGO_URI).then(() => {
-        resolve(app);
-      });
+      mongoose
+        .connect(process.env.MONGO_URI)
+        .then(() => {
+          resolve(app);
+        })
+        .catch((err) => {
+          reject(err);
+        });
     }
   });
 };
+
 
 export default initApp;
 

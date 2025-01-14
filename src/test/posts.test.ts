@@ -26,10 +26,9 @@
   beforeAll(async () => {
       app = await initApp();
       await postModel.deleteMany();
-      await AuthModel.deleteMany();
+      // await AuthModel.deleteMany();
       await request(app).post("/auth/register").send(userInfo);
       const response = await request(app).post("/auth/login").send(userInfo);
-      console.log("Login response:", response.body);
       userInfo._id=response.body._id  || response.body._Id;
       userInfo.accessToken=response.body.accessToken;
       userInfo.refreshToken=response.body.refreshToken;
@@ -54,7 +53,7 @@
           title: "title",
           content: "content",
         });
-      console.log(response.body); 
+    
       postId = response.body._id;
       expect(response.status).toBe(201);
       expect(response.body.title).toBe("title");
@@ -80,7 +79,6 @@
     });
 
     test("Test get post by id", async () => {
-      console.log("post ID:", postId);
       const response = await request(app).get(`/post/` + postId);
       expect(response.status).toBe(200);
       expect(response.body.title).toBe("title");
@@ -95,14 +93,12 @@
     
     test("Test get post by owner", async () => {
       const response = await request(app).get(`/post/all?owner=${userInfo._id}`);
-      console.log("Request sent to /post/all with owner:", userInfo._id);
       expect(response.status).toBe(200);
       expect(response.body).toHaveLength(1);
     });
 
     test("Test fail to get post by owner", async () => {
       const response = await request(app).get(`/post/all?owner=123456`);
-      console.log("Request sent to /post/all with owner: 123456");
       expect(response.status).toBe(404);
     });
 
@@ -118,6 +114,20 @@
       expect(response.body.title).toBe("updated title");
       expect(response.body.content).toBe("updated content");
     })
+    test("Test update post with non-existing ID'", async () => {
+      const fakeId = new mongoose.Types.ObjectId().toString();
+    
+      const response = await request(app)
+        .put(`/post/${fakeId}`)
+        .set("Authorization", "jwt " + userInfo.accessToken)
+        .send({
+          title: "Doesn't matter",
+          content: "Because post is not found",
+        });
+    
+      expect(response.status).toBe(404);
+      expect(response.text).toBe("could not find post");
+    });
 
     test("Test fail to update post", async () => {
       const response = await request(app).put(`/post/` + postId).set({

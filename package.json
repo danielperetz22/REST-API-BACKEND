@@ -7,10 +7,7 @@
     "build": "tsc",
     "dev": "nodemon dist/app.js",
     "start": "node dist/app.js",
-    "test": "tsc && jest --detectOpenHandles --forceExit",
-    "testA": "tsc && jest --detectOpenHandles --forceExit auth.test.ts",
-    "testP": "tsc && jest --detectOpenHandles --forceExit  posts.test.ts",
-    "testC": "tsc && jest --detectOpenHandles --forceExit  comments.test.ts"
+    "test": "tsc && jest --detectOpenHandles --forceExit --coverage"
   },
   "repository": {
     "type": "git",

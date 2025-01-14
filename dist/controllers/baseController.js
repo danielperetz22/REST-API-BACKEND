@@ -49,10 +49,8 @@ class BaseController {
     }
     async getById(req, res) {
         const askedID = req.params._id;
-        console.log("Get By Id", askedID);
         try {
             const Item = await this.model.findById(askedID);
-            console.log("Item is", Item);
             if (!Item) {
                 res.status(404).send("COULDNT FIND DUE TO AN ERROR");
                 return;

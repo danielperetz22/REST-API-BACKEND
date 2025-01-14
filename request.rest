@@ -10,13 +10,13 @@ Content-Type: application/json
 }
 
 ### Get Post by ID
-GET http://localhost:3000/post/67823002977ae01f153634b6
+GET http://localhost:3000/post/678616f3e56d98efeb7e5fee
 
 ### Get All Posts
 GET http://localhost:3000/post/all
 
 ### Get Posts by Sender
-GET http://localhost:3000/post/filter/bySender?senderId=Hilaa
+GET http://localhost:3000/post/?senderId=Hilaa
 
 ### Update a Post
 PUT http://localhost:3000/post/67839f695f21a781fa13d1a4

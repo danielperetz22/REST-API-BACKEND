@@ -40,12 +40,18 @@ const initApp = async () => {
         });
         if (!process.env.MONGO_URI) {
             console.error("initApplication UNDEFINED MONGO_URI");
-            reject();
+            // Reject with a descriptive error message
+            reject(new Error("MONGO_URI is not defined in the environment variables"));
             return;
         }
         else {
-            mongoose_1.default.connect(process.env.MONGO_URI).then(() => {
+            mongoose_1.default
+                .connect(process.env.MONGO_URI)
+                .then(() => {
                 resolve(app);
+            })
+                .catch((err) => {
+                reject(err);
             });
         }
     });

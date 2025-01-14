@@ -37,7 +37,6 @@ describe('Auth Tests', () => {
             email: 'yohai@gmail.com',
             password: 'yohai123',
         });
-        console.log(response.body);
         expect(response.status).toBe(201);
         const user = await AuthModel_1.default.findOne({ email: userInfo.email });
         expect(user).not.toBeNull();
@@ -168,6 +167,19 @@ describe('Auth Tests', () => {
         expect(response.status).toBe(400);
         expect(response.body.message).toBe('Invalid username, email, or password');
     });
+    test("Login fails to generate tokens because SECRET is missing", async () => {
+        const originalSecret = process.env.ACCESS_TOKEN_SECRET;
+        delete process.env.ACCESS_TOKEN_SECRET;
+        const response = await (0, supertest_1.default)(app)
+            .post("/auth/login")
+            .send({
+            email: userInfo.email,
+            password: userInfo.password
+        });
+        expect(response.status).toBe(500);
+        expect(response.body.message).toBe("Failed to generate tokens");
+        process.env.ACCESS_TOKEN_SECRET = originalSecret;
+    });
     test("Refresh tokens - valid refresh token", async () => {
         const response = await (0, supertest_1.default)(app)
             .post("/auth/refresh")
@@ -175,7 +187,7 @@ describe('Auth Tests', () => {
         expect(response.status).toBe(200);
         expect(response.body).toHaveProperty("accessToken");
         expect(response.body).toHaveProperty("refreshToken");
-        expect(response.body.refreshToken).not.toBe(refreshToken); // Ensure a new refresh token is issued
+        expect(response.body.refreshToken).not.toBe(refreshToken);
     });
     test("Refresh tokens - invalid refresh token", async () => {
         const invalidToken = "invalidToken123";
@@ -204,5 +216,38 @@ describe('Auth Tests', () => {
             .send({ refreshToken: invalidToken });
         expect(response.status).toBe(400);
         expect(response.text).toBe("error");
+    });
+    test("Missing token => 400 'Access denied: Missing token'", async () => {
+        const response = await (0, supertest_1.default)(app).get("/auth/testAuth");
+        expect(response.status).toBe(400);
+        expect(response.text).toBe("Access denied: Missing token");
+    });
+    test("Missing ACCESS_TOKEN_SECRET ", async () => {
+        const originalSecret = process.env.ACCESS_TOKEN_SECRET;
+        delete process.env.ACCESS_TOKEN_SECRET;
+        const response = await (0, supertest_1.default)(app)
+            .get("/auth/testAuth")
+            .set("Authorization", "Bearer someFakeToken");
+        expect(response.status).toBe(500);
+        expect(response.text).toBe("Server error: Missing token secret");
+        process.env.ACCESS_TOKEN_SECRET = originalSecret;
+    });
+    test("Invalid token 'Access denied'", async () => {
+        const response = await (0, supertest_1.default)(app)
+            .get("/auth/testAuth")
+            .set("Authorization", "Bearer invalidToken123");
+        expect(response.status).toBe(400);
+        expect(response.text).toBe("Access denied: Invalid token");
+    });
+    test("Valid token pass middleware", async () => {
+        const loginResponse = await (0, supertest_1.default)(app)
+            .post("/auth/login")
+            .send({ username: userInfo.username, password: userInfo.password });
+        const validToken = loginResponse.body.accessToken;
+        const response = await (0, supertest_1.default)(app)
+            .get("/auth/testAuth")
+            .set("Authorization", "Bearer " + validToken);
+        expect(response.status).toBe(200);
+        expect(response.body.message).toBe("You are authenticated");
     });
 });
