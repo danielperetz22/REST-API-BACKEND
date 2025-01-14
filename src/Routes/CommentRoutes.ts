@@ -1,17 +1,30 @@
-import express from 'express';
-const router = express.Router();
+import express , {Request,Response} from 'express';
 import CommentControllers from '../controllers/CommentControllers';
 
+const router = express.Router();
 
 
-router.post('/', CommentControllers.createComment);
-router.get('/all', CommentControllers.getAllComments);
-router.get('/post/:postId', CommentControllers.getCommentsByPost);
-router.get('/:commentId', CommentControllers.getCommentById);
-router.put('/update/:commentId', CommentControllers.updateComment);
-// router.delete('/:commentId', (req, res, next) => 
-//     CommentControllers.deleteComment(req, res).catch(next));
-router.delete('/delete/:commentId', CommentControllers.deleteComment);
-router.delete('/delete/all', CommentControllers.deleteAllComments);
+router.get("/", (req: Request, res: Response) => {
+    const postId = req.query.postId;
+    if (!postId) {
+        CommentControllers.getAll(req, res);
+    } else {
+        CommentControllers.gatAllCommentsByPostId(req, res);
+    }});
+
+router.get("/:_id", (req: Request, res: Response) => {
+    CommentControllers.getById(req, res); });
+
+router.post("/", (req: Request, res: Response) => {
+    CommentControllers.create(req, res);
+});
+
+router.put("/:_id",CommentControllers.updateComment.bind(CommentControllers));
+
+router.delete("/:_id", (req: Request, res: Response) => {
+    CommentControllers.deleteComment(req, res);
+});
+
+
 
 export default router;

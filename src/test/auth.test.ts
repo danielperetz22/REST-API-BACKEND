@@ -32,36 +32,50 @@ const userInfo:UserInfo = {
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 describe('Auth Tests', () => {
-    test('Auth Register', async () => {
-        const response = await request(app).post('/auth/register').send(userInfo);
-        expect(response.status).toBe(201);
-        const user = await User.findOne({ email: userInfo.email });
-        expect(user).not.toBeNull();
+  
+  let accessToken: string;
+  let refreshToken: string;
+
+  beforeEach(async () => {
+    await request(app).post("/auth/register").send(userInfo);
+    const loginResponse = await request(app).post("/auth/login").send(userInfo);
+    accessToken = loginResponse.body.accessToken;
+    refreshToken = loginResponse.body.refreshToken;
+  });
+
+  test('Auth Register', async () => {
+    const response = await request(app).post('/auth/register').send({
+      username: 'yohai',
+      email: 'yohai@gmail.com',
+      password: 'yohai123',
+    });
+    expect(response.status).toBe(201);
+    const user = await User.findOne({ email: userInfo.email });
+    expect(user).not.toBeNull();
+  });
+  
+    
+    test("Auth Register with existing email", async () => {
+      const response = await request(app).post("/auth/register").send({
+        username: "newuser",
+        email: userInfo.email, 
+        password: "password123",
+      });
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe("Email is already in use");
     });
     
 
-    test('Auth Register with existing email', async () => {
-        await request(app).post('/auth/register').send(userInfo); 
-        const response = await request(app).post('/auth/register').send({
-            username: 'dan',
-            email: userInfo.email,
-            password: '123456',
-    }); 
-        expect(response.status).toBe(400); 
-        expect(response.body.message).toBe('Email already in use');
-    });
 
     test('Auth Register with existing username', async () => {
-        await request(app).post('/auth/register').send(userInfo);
-        const response = await request(app).post('/auth/register').send({
-          username: userInfo.username,
-          email: 'newemail@gmail.com',
-          password: '123456',
-        });
-      
-        expect(response.status).toBe(400);
-        expect(response.body.message).toBe('Username already in use');
+      const response = await request(app).post("/auth/register").send({
+        username: userInfo.username, 
+        email: "newemail@example.com", 
+        password: "password123",
       });
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe("Username already in use");
+    });
 
       test('Auth Register without username', async () => {
         const response = await request(app).post('/auth/register').send({
@@ -70,7 +84,7 @@ describe('Auth Tests', () => {
           password: '123456',
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('Username, email, and password are required');
+        expect(response.body.message).toBe('All fields (username, email, and password) are required');
       });
 
       test('Auth Register without password', async () => {
@@ -80,7 +94,7 @@ describe('Auth Tests', () => {
           password: '',
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('Username, email, and password are required');
+        expect(response.body.message).toBe('All fields (username, email, and password) are required');
       });
 
       test('Auth Register without email', async () => {
@@ -90,16 +104,15 @@ describe('Auth Tests', () => {
           password: '123456',
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('Username, email, and password are required');
+        expect(response.body.message).toBe('All fields (username, email, and password) are required');
       });
       test('Registration fails when required fields are missing', async () => {
         const response = await request(app).post('/auth/register').send({
             username: 'testuser',
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('Username, email, and password are required');
+        expect(response.body.message).toBe('All fields (username, email, and password) are required');
     });
-
       test('Auth Login with valid username and password', async () => {
         await request(app).post('/auth/register').send(userInfo);
         const response = await request(app).post('/auth/login').send({
@@ -109,8 +122,6 @@ describe('Auth Tests', () => {
         expect(response.status).toBe(200);
         expect(response.body.accessToken).not.toBeNull();
     });
-    
-    
     test('Auth Login with valid email and password', async () => {
         await request(app).post('/auth/register').send(userInfo);
         const response = await request(app).post('/auth/login').send({
@@ -119,17 +130,7 @@ describe('Auth Tests', () => {
         });
         expect(response.status).toBe(200);
         expect(response.body.accessToken).not.toBeNull();
-    });
-    
-      test('Auth Login with non-existing username', async () => {
-        const response = await request(app).post('/auth/login').send({
-          username: 'nonexistent',
-          password: userInfo.password
-        });
-        expect(response.status).toBe(400);
-        expect(response.body.message).toBe('Invalid username or email');
-      });
-
+    });  
     test('Auth Login with non-existing email', async () => {
         await request(app).post('/auth/register').send(userInfo);
         const response = await request(app).post('/auth/login').send({
@@ -137,7 +138,15 @@ describe('Auth Tests', () => {
             password: userInfo.password,
         }); 
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe("Invalid username or email");
+        expect(response.body.message).toBe("Invalid username, email, or password");
+    });
+    test('Auth Login with non-existing username', async () => {
+      const response = await request(app).post('/auth/login').send({
+        username: 'nonexistent',
+        password: userInfo.password
+      });
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Invalid username, email, or password');
     });
     test('Auth Login with invalid password', async () => {
         await request(app).post('/auth/register').send(userInfo);
@@ -146,7 +155,7 @@ describe('Auth Tests', () => {
           password: 'wrongpassword'
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('Invalid password');
+        expect(response.body.message).toBe('Invalid username, email, or password');
       });
     
     
@@ -164,7 +173,7 @@ describe('Auth Tests', () => {
             password: '123456',
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('Invalid username or email');
+        expect(response.body.message).toBe('Invalid username, email, or password');
     });
 
     test('Login fails with invalid password', async () => {
@@ -180,69 +189,110 @@ describe('Auth Tests', () => {
             password: 'wrongpassword',
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('Invalid password');
+        expect(response.body.message).toBe('Invalid username, email, or password');
     });
+    test("Login fails to generate tokens because SECRET is missing", async () => {
+      const originalSecret = process.env.ACCESS_TOKEN_SECRET;
+      delete process.env.ACCESS_TOKEN_SECRET;  
     
-      test('Token validation - valid token', async () => {
-        await User.deleteMany({}); 
-        const registerResponse = await request(app).post('/auth/register').send(userInfo);
-        expect(registerResponse.status).toBe(201);
-        const loginResponse = await request(app).post('/auth/login').send(userInfo);
-        expect(loginResponse.status).toBe(200);
-        const token = loginResponse.body.accessToken;
-        expect(token).not.toBeNull();
-        const response = await request(app).get('/auth/validate').set('Authorization', `Bearer ${token}`);
-        expect(response.status).toBe(200);
-        expect(response.body.message).toBe('Token is valid');
-      });
-
-      test('Token validation - not valid token', async () => {
-        await User.deleteMany({}); 
-        const registerResponse = await request(app).post('/auth/register').send(userInfo);
-        expect(registerResponse.status).toBe(201);
-        const loginResponse = await request(app).post('/auth/login').send(userInfo);
-        expect(loginResponse.status).toBe(200);
-        const token = 'invalidToken123';
-        expect(token).not.toBeNull();
-        const response = await request(app).get('/auth/validate').set('Authorization', `Bearer ${token}`);
-        expect(response.status).toBe(401);
-        expect(response.body.message).toBe('Invalid or expired token');
-      });
-      test('Access protected route without token', async () => {
-        const response = await request(app).get('/auth/protected');
-        expect(response.status).toBe(401); 
-        expect(response.body.message).toBe('Authorization token is missing');
-    });
+      const response = await request(app)
+        .post("/auth/login")
+        .send({
+          email: userInfo.email,
+          password: userInfo.password
+        });
     
-    test('Access protected route with invalid token', async () => {
-        const response = await request(app).get('/auth/protected').set('Authorization', 'Bearer invalidToken123');
-        expect(response.status).toBe(403);
-        expect(response.body.message).toBe('Invalid or expired token');
-    });    
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe("Failed to generate tokens");
+    
       
-    test('Token validation - expired token', async () => {
-        await User.deleteMany({});
-        const registerResponse = await request(app).post('/auth/register').send(userInfo);
-        expect(registerResponse.status).toBe(201);
-        const loginResponse = await request(app).post('/auth/login').send(userInfo);
-        expect(loginResponse.status).toBe(200);
-        const token = loginResponse.body.accessToken;
-        expect(token).not.toBeNull();
-        const response = await request(app).get('/auth/validate').set('Authorization', `Bearer ${token}`);
-        expect(response.status).toBe(200);
-        expect(response.body.message).toBe('Token is valid');
-        await sleep(6000);
-        const response2 = await request(app).get('/auth/validate').set('Authorization', `Bearer ${token}`);
-        expect(response2.status).toBe(401);
-        expect(response2.body.message).toBe('Invalid or expired token');
-    },10000);
-
-    test('Protected route access fails without token', async () => {
-        const response = await request(app).get('/auth/protected');
-        expect(response.status).toBe(401);
-        expect(response.body.message).toBe('Authorization token is missing');
+      process.env.ACCESS_TOKEN_SECRET = originalSecret;
     });
-    
-    
 
+    test("Refresh tokens - valid refresh token", async () => {
+      const response = await request(app)
+        .post("/auth/refresh")
+        .send({ refreshToken });
+  
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty("accessToken");
+      expect(response.body).toHaveProperty("refreshToken");
+      expect(response.body.refreshToken).not.toBe(refreshToken); 
+    });
+  
+    test("Refresh tokens - invalid refresh token", async () => {
+      const invalidToken = "invalidToken123";
+      const response = await request(app)
+        .post("/auth/refresh")
+        .send({ refreshToken: invalidToken });
+  
+      expect(response.status).toBe(400);
+      expect(response.text).toBe("error");
+    });
+  
+    test("Logout - valid refresh token", async () => {
+      const response = await request(app)
+        .post("/auth/logout")
+        .send({ refreshToken });
+  
+      expect(response.status).toBe(200);
+      expect(response.text).toBe("logged out");
+  
+      
+      const refreshResponse = await request(app)
+        .post("/auth/refresh")
+        .send({ refreshToken });
+  
+      expect(refreshResponse.status).toBe(400);
+      expect(refreshResponse.text).toBe("error");
+    });
+  
+    test("Logout - invalid refresh token", async () => {
+      const invalidToken = "invalidToken123";
+      const response = await request(app)
+        .post("/auth/logout")
+        .send({ refreshToken: invalidToken });
+  
+      expect(response.status).toBe(400);
+      expect(response.text).toBe("error");
+    });
+
+    test("Missing token => 400 'Access denied: Missing token'", async () => {
+      const response = await request(app).get("/auth/testAuth");
+      expect(response.status).toBe(400);
+      expect(response.text).toBe("Access denied: Missing token");
+    });
+
+    test("Missing ACCESS_TOKEN_SECRET ", async () => {
+      const originalSecret = process.env.ACCESS_TOKEN_SECRET;
+      delete process.env.ACCESS_TOKEN_SECRET;
+      const response = await request(app)
+        .get("/auth/testAuth")
+        .set("Authorization", "Bearer someFakeToken");
+      expect(response.status).toBe(500);
+      expect(response.text).toBe("Server error: Missing token secret");
+      process.env.ACCESS_TOKEN_SECRET = originalSecret;
+    });
+    test("Invalid token 'Access denied'", async () => {
+      
+      const response = await request(app)
+        .get("/auth/testAuth")
+        .set("Authorization", "Bearer invalidToken123");
+      expect(response.status).toBe(400);
+      expect(response.text).toBe("Access denied: Invalid token");
+    });
+  
+    test("Valid token pass middleware", async () => {
+     
+      const loginResponse = await request(app)
+        .post("/auth/login")
+        .send({ username: userInfo.username, password: userInfo.password });
+      const validToken = loginResponse.body.accessToken;
+  
+      const response = await request(app)
+        .get("/auth/testAuth")
+        .set("Authorization", "Bearer " + validToken);
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe("You are authenticated");
+    });
 });

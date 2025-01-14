@@ -4,40 +4,60 @@ import mongoose from 'mongoose';
 import postRoutes from './Routes/PostsRoutes';
 import CommentRoutes from './Routes/CommentRoutes';
 import AuthRoutes from './Routes/AuthRoutes';
+import bodyParser from "body-parser";
 
 dotenv.config();
+const app = express();
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use('/post', postRoutes);
+app.use('/comment', CommentRoutes);
+app.use('/auth', AuthRoutes);
+
+const options = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Hila and Daniel's REST API",
+      version: "1.0.0",
+      description: "REST server including authentication using JWT",
+    },
+    servers: [{ url: "http://localhost:3000" }],
+  },
+  apis: ["./src/Routes/*.ts"],
+};
 
 const initApp = async (): Promise<Express> => {
-  const app = express();
+  return new Promise<Express>((resolve, reject) => {
+    const db = mongoose.connection;
 
-  app.use(express.json());
+    db.on("error", (error) => {
+      console.error("Database connection error:", error);
+    });
 
-  app.use((req, res, next) => {
-    console.log(`${req.method} ${req.url}`);
-    next();
+    db.once("open", () => {
+      console.log("Connected to database");
+    });
+
+    if (!process.env.MONGO_URI) {
+      console.error("initApplication UNDEFINED MONGO_URI");
+      // Reject with a descriptive error message
+      reject(new Error("MONGO_URI is not defined in the environment variables"));
+      return;
+    } else {
+      mongoose
+        .connect(process.env.MONGO_URI)
+        .then(() => {
+          resolve(app);
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    }
   });
-
-
-  app.use('/post', postRoutes);
-  app.use('/comment', CommentRoutes);
-  app.use('/auth', AuthRoutes);
-
-
-  const mongoUri = process.env.MONGO_URI;
-  if (!mongoUri) {
-    throw new Error("MONGO_URI is not defined in the environment variables");
-  }
-
-  try {
-    await mongoose.connect(mongoUri);
-    console.log("Connected to MongoDB");
-  } catch (err) {
-    console.error("MongoDB connection error:", err);
-    throw err; 
-  }
-
-  return app;
 };
+
 
 export default initApp;
 
