@@ -18,17 +18,27 @@ const generateTokens = (_id) => {
 };
 const register = async (req, res) => {
     const { username, email, password } = req.body;
-    if (!username || !email || !password) {
-        res.status(400).json({ message: "All fields (username, email, and password) are required" });
+    if (!username || typeof username !== 'string') {
+        res.status(400).json({ message: "Username is required and must be a string" });
+        return;
+    }
+    if (!email || typeof email !== 'string') {
+        res.status(400).json({ message: "Email is required and must be a string" });
+        return;
+    }
+    if (!password || typeof password !== 'string') {
+        res.status(400).json({ message: "Password is required and must be a string" });
         return;
     }
     try {
-        const existingUser = await AuthModel_1.default.findOne({ $or: [{ username }, { email }], });
+        const existingUser = await AuthModel_1.default.findOne({
+            $or: [{ username }, { email }],
+        });
         if (existingUser) {
             const errorMessage = existingUser.email === email
-                ? "Email is already in use"
+                ? "Email already in use"
                 : "Username already in use";
-            res.status(400).send({ error: errorMessage });
+            res.status(400).json({ error: errorMessage });
             return;
         }
         const salt = await bcrypt_1.default.genSalt(10);
@@ -38,17 +48,19 @@ const register = async (req, res) => {
             email,
             password: hashedPassword,
         });
-        res.status(201).send({
-            _id: user._id,
-            username: user.username,
-            email: user.email,
+        res.status(201).json({
+            message: "User registered successfully",
+            user: {
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+            },
         });
         return;
     }
     catch (err) {
-        console.log(err);
-        res.status(400);
-        return;
+        console.error("Error in register:", err);
+        res.status(500).json({ message: "Internal server error", error: err });
     }
 };
 const login = async (req, res) => {

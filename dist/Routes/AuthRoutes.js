@@ -77,7 +77,7 @@ const AuthControllers_1 = __importStar(require("../controllers/AuthControllers")
  *       example:
  *         username: daniel
  *         email: daniel@gmail.com
- *         password: 123
+ *         password: "123"
  */
 /**
  * @swagger
@@ -124,6 +124,9 @@ router.post('/register', AuthControllers_1.default.register);
  *                 type: string
  *               password:
  *                 type: string
+ *             example:
+ *               username: daniel
+ *               password: "123"
  *     responses:
  *       200:
  *         description: User logged in successfully

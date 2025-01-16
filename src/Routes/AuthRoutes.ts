@@ -42,7 +42,7 @@ import AuthControllers, { authMiddleware } from '../controllers/AuthControllers'
  *       example:
  *         username: daniel
  *         email: daniel@gmail.com
- *         password: 123
+ *         password: "123"
  */
 
 /**
@@ -91,6 +91,9 @@ router.post('/register', AuthControllers.register);
  *                 type: string
  *               password:
  *                 type: string
+ *             example:
+ *               username: daniel
+ *               password: "123"
  *     responses:
  *       200:
  *         description: User logged in successfully
@@ -106,6 +109,7 @@ router.post('/register', AuthControllers.register);
  *       400:
  *         description: Invalid username or password
  */
+
 router.post('/login', AuthControllers.login);
 
 /**

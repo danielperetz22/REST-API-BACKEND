@@ -48,7 +48,7 @@ describe('Auth Tests', () => {
             password: "password123",
         });
         expect(response.status).toBe(400);
-        expect(response.body.error).toBe("Email is already in use");
+        expect(response.body.error).toBe("Email already in use");
     });
     test('Auth Register with existing username', async () => {
         const response = await (0, supertest_1.default)(app).post("/auth/register").send({
@@ -66,7 +66,7 @@ describe('Auth Tests', () => {
             password: '123456',
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('All fields (username, email, and password) are required');
+        expect(response.body.message).toBe('Username is required and must be a string');
     });
     test('Auth Register without password', async () => {
         const response = await (0, supertest_1.default)(app).post('/auth/register').send({
@@ -75,7 +75,7 @@ describe('Auth Tests', () => {
             password: '',
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('All fields (username, email, and password) are required');
+        expect(response.body.message).toBe('Password is required and must be a string');
     });
     test('Auth Register without email', async () => {
         const response = await (0, supertest_1.default)(app).post('/auth/register').send({
@@ -84,14 +84,14 @@ describe('Auth Tests', () => {
             password: '123456',
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('All fields (username, email, and password) are required');
+        expect(response.body.message).toBe('Email is required and must be a string');
     });
     test('Registration fails when required fields are missing', async () => {
         const response = await (0, supertest_1.default)(app).post('/auth/register').send({
             username: 'testuser',
         });
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('All fields (username, email, and password) are required');
+        expect(response.body.message).toBe('Email is required and must be a string');
     });
     test('Auth Login with valid username and password', async () => {
         await (0, supertest_1.default)(app).post('/auth/register').send(userInfo);
