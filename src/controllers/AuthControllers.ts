@@ -35,21 +35,32 @@ const generateTokens = (_id : string): { refreshToken: string; accessToken: stri
 const register = async (req: Request, res: Response) => {
   const { username, email, password } = req.body;
 
-  if (!username || !email || !password) {
-    res.status(400).json({ message: "All fields (username, email, and password) are required" });
+  if (!username || typeof username !== 'string') {
+    res.status(400).json({ message: "Username is required and must be a string" });
     return;
   }
-  try {
-    const existingUser = await userModel.findOne({$or: [{ username }, { email }],});
-    if (existingUser) {
-      const errorMessage =
-      existingUser.email === email
-        ? "Email is already in use"
-        : "Username already in use";
-     res.status(400).send({ error: errorMessage });
-     return;
+  if (!email || typeof email !== 'string') {
+    res.status(400).json({ message: "Email is required and must be a string" });
+    return;
+  }
+  if (!password || typeof password !== 'string') {
+    res.status(400).json({ message: "Password is required and must be a string" });
+    return;
   }
 
+  try {
+    const existingUser = await userModel.findOne({
+      $or: [{ username }, { email }],
+    });
+
+    if (existingUser) {
+      const errorMessage =
+        existingUser.email === email
+          ? "Email already in use"
+          : "Username already in use";
+      res.status(400).json({ error: errorMessage });
+      return;
+    }
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -58,16 +69,18 @@ const register = async (req: Request, res: Response) => {
       email,
       password: hashedPassword,
     });
-     res.status(201).send({
-      _id: user._id,
-      username: user.username,
-      email: user.email,
+    res.status(201).json({
+      message: "User registered successfully",
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+      },
     });
     return;
   } catch (err) {
-    console.log(err);
-    res.status(400);
-    return;
+    console.error("Error in register:", err);
+    res.status(500).json({ message: "Internal server error", error: err });
   }
 };
 

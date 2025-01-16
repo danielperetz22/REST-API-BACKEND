@@ -10,6 +10,8 @@ const PostsRoutes_1 = __importDefault(require("./Routes/PostsRoutes"));
 const CommentRoutes_1 = __importDefault(require("./Routes/CommentRoutes"));
 const AuthRoutes_1 = __importDefault(require("./Routes/AuthRoutes"));
 const body_parser_1 = __importDefault(require("body-parser"));
+const swagger_jsdoc_1 = __importDefault(require("swagger-jsdoc"));
+const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use(body_parser_1.default.json());
@@ -25,10 +27,12 @@ const options = {
             version: "1.0.0",
             description: "REST server including authentication using JWT",
         },
-        servers: [{ url: "http://localhost:3000" }],
+        servers: [{ url: "http://localhost:" + process.env.PORT }],
     },
     apis: ["./src/Routes/*.ts"],
 };
+const specs = (0, swagger_jsdoc_1.default)(options);
+app.use("/api-docs", swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(specs));
 const initApp = async () => {
     return new Promise((resolve, reject) => {
         const db = mongoose_1.default.connection;
@@ -40,7 +44,6 @@ const initApp = async () => {
         });
         if (!process.env.MONGO_URI) {
             console.error("initApplication UNDEFINED MONGO_URI");
-            // Reject with a descriptive error message
             reject(new Error("MONGO_URI is not defined in the environment variables"));
             return;
         }
