@@ -39,5 +39,6 @@ const UserSchema = new mongoose_1.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     refeshtokens: { type: [String], default: [] },
+    profileImage: { type: String, default: "" },
 }, { timestamps: true });
 exports.default = mongoose_1.default.model('User', UserSchema);

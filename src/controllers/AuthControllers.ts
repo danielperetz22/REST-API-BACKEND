@@ -3,6 +3,10 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import userModel, { IUser } from "../models/AuthModel";
 import { Document } from "mongoose";
+import { upload } from "../middlewares/uploadMiddleware";
+import { OAuth2Client } from "google-auth-library";
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 declare global {
   namespace Express {
@@ -31,24 +35,26 @@ const generateTokens = (_id : string): { refreshToken: string; accessToken: stri
 
   return { refreshToken:refreshToken, accessToken:accessToken };
 };
-
 const register = async (req: Request, res: Response) => {
   const { username, email, password } = req.body;
+  const profileImage = req.file?.path || ""; 
 
-  if (!username || typeof username !== 'string') {
+ 
+  if (!username || typeof username !== "string") {
     res.status(400).json({ message: "Username is required and must be a string" });
     return;
   }
-  if (!email || typeof email !== 'string') {
+  if (!email || typeof email !== "string") {
     res.status(400).json({ message: "Email is required and must be a string" });
     return;
   }
-  if (!password || typeof password !== 'string') {
+  if (!password || typeof password !== "string") {
     res.status(400).json({ message: "Password is required and must be a string" });
     return;
   }
 
   try {
+    
     const existingUser = await userModel.findOne({
       $or: [{ username }, { email }],
     });
@@ -61,20 +67,27 @@ const register = async (req: Request, res: Response) => {
       res.status(400).json({ error: errorMessage });
       return;
     }
+
+    
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+   
     const user: IUser = await userModel.create({
       username,
       email,
       password: hashedPassword,
+      profileImage, 
     });
+
+  
     res.status(201).json({
       message: "User registered successfully",
       user: {
         _id: user._id,
         username: user.username,
         email: user.email,
+        profileImage: user.profileImage, 
       },
     });
     return;
@@ -83,6 +96,7 @@ const register = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Internal server error", error: err });
   }
 };
+
 
 const login = async (req: Request, res: Response) => {
   const username = req.body.username;
@@ -224,4 +238,52 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
 };
 
 
-export default {register,login,refresh,logout,};
+
+ const googleLogin = async (req: Request, res: Response) => {
+  const { token } = req.body;
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload) {
+       res.status(400).json({ message: "Invalid Google token." });
+       return;
+    }
+
+    const { email, name, picture } = payload;
+
+    let user = await userModel.findOne({ email });
+    if (!user) {
+      user = await userModel.create({
+        username: name,
+        email,
+        password: "", 
+        profileImage: picture,
+      });
+    }
+
+    const tokens = generateTokens(user._id as string);
+    if (!tokens) {
+       res.status(500).json({ message: "Failed to generate tokens." });
+       return;
+    }
+
+    res.status(200).json({
+      ...tokens,
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        profileImage: user.profileImage,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error logging in with Google.", error });
+  }
+};
+
+export default { register, login, refresh, logout, googleLogin };

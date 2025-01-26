@@ -39,6 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const router = express_1.default.Router();
 const AuthControllers_1 = __importStar(require("../controllers/AuthControllers"));
+const uploadMiddleware_1 = require("../middlewares/uploadMiddleware");
 /**
  * @swagger
  * tags:
@@ -102,7 +103,7 @@ const AuthControllers_1 = __importStar(require("../controllers/AuthControllers")
  *       400:
  *         description: Missing required fields or invalid data
  */
-router.post('/register', AuthControllers_1.default.register);
+router.post("/register", uploadMiddleware_1.upload.single("profileImage"), AuthControllers_1.default.register);
 /**
  * @swagger
  * /auth/login:
@@ -200,6 +201,29 @@ router.post('/logout', AuthControllers_1.default.logout);
  *         description: Invalid or expired refresh token
  */
 router.post('/refresh', AuthControllers_1.default.refresh);
+/**
+ * @swagger
+ * /auth/google:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Log in with Google
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Logged in successfully
+ *       400:
+ *         description: Invalid Google token
+ */
+router.post("/google", AuthControllers_1.default.googleLogin);
 /**
  * @swagger
  * /auth/testAuth:

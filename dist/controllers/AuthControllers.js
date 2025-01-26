@@ -7,6 +7,8 @@ exports.authMiddleware = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const AuthModel_1 = __importDefault(require("../models/AuthModel"));
+const google_auth_library_1 = require("google-auth-library");
+const client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const generateTokens = (_id) => {
     if (process.env.ACCESS_TOKEN_SECRET === undefined) {
         return null;
@@ -17,16 +19,18 @@ const generateTokens = (_id) => {
     return { refreshToken: refreshToken, accessToken: accessToken };
 };
 const register = async (req, res) => {
+    var _a;
     const { username, email, password } = req.body;
-    if (!username || typeof username !== 'string') {
+    const profileImage = ((_a = req.file) === null || _a === void 0 ? void 0 : _a.path) || "";
+    if (!username || typeof username !== "string") {
         res.status(400).json({ message: "Username is required and must be a string" });
         return;
     }
-    if (!email || typeof email !== 'string') {
+    if (!email || typeof email !== "string") {
         res.status(400).json({ message: "Email is required and must be a string" });
         return;
     }
-    if (!password || typeof password !== 'string') {
+    if (!password || typeof password !== "string") {
         res.status(400).json({ message: "Password is required and must be a string" });
         return;
     }
@@ -47,6 +51,7 @@ const register = async (req, res) => {
             username,
             email,
             password: hashedPassword,
+            profileImage,
         });
         res.status(201).json({
             message: "User registered successfully",
@@ -54,6 +59,7 @@ const register = async (req, res) => {
                 _id: user._id,
                 username: user.username,
                 email: user.email,
+                profileImage: user.profileImage,
             },
         });
         return;
@@ -192,4 +198,42 @@ const authMiddleware = (req, res, next) => {
     });
 };
 exports.authMiddleware = authMiddleware;
-exports.default = { register, login, refresh, logout, };
+const googleLogin = async (req, res) => {
+    const { token } = req.body;
+    try {
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        const payload = ticket.getPayload();
+        if (!payload) {
+            res.status(400).json({ message: "Invalid Google token." });
+            return;
+        }
+        const { email, name, picture } = payload;
+        let user = await AuthModel_1.default.findOne({ email });
+        if (!user) {
+            user = await AuthModel_1.default.create({
+                username: name,
+                email,
+                password: "",
+                profileImage: picture,
+            });
+        }
+        const tokens = generateTokens(user._id);
+        if (!tokens) {
+            res.status(500).json({ message: "Failed to generate tokens." });
+            return;
+        }
+        res.status(200).json(Object.assign(Object.assign({}, tokens), { user: {
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+                profileImage: user.profileImage,
+            } }));
+    }
+    catch (error) {
+        res.status(500).json({ message: "Error logging in with Google.", error });
+    }
+};
+exports.default = { register, login, refresh, logout, googleLogin };
