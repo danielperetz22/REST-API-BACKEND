@@ -1,6 +1,7 @@
 import express from 'express';
 const router = express.Router();
 import AuthControllers, { authMiddleware } from '../controllers/AuthControllers';
+import { upload } from "../middlewares/uploadMiddleware";
 
 /**
  * @swagger
@@ -68,8 +69,7 @@ import AuthControllers, { authMiddleware } from '../controllers/AuthControllers'
  *       400:
  *         description: Missing required fields or invalid data
  */
-router.post('/register', AuthControllers.register);
-
+router.post("/register", upload.single("profileImage"), AuthControllers.register);
 /**
  * @swagger
  * /auth/login:
@@ -170,6 +170,31 @@ router.post('/logout', AuthControllers.logout);
  *         description: Invalid or expired refresh token
  */
 router.post('/refresh', AuthControllers.refresh);
+
+/**
+ * @swagger
+ * /auth/google:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Log in with Google
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Logged in successfully
+ *       400:
+ *         description: Invalid Google token
+ */
+router.post("/google",AuthControllers.googleLogin);
+
 
 /**
  * @swagger
