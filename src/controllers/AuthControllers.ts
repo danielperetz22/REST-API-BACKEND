@@ -99,42 +99,52 @@ const register = async (req: Request, res: Response) => {
 
 
 const login = async (req: Request, res: Response) => {
-  const username = req.body.username;
-  const email = req.body.email;
-  const password = req.body.password;
+  const { identifier, password } = req.body;
+
   try {
-    if ((!username && !email) || !password) {
-      res.status(400).json({ message: "Username or email and password are required" });
+    
+    if (!identifier || !password) {
+      res.status(400).json({ message: "Identifier and password are required" });
       return;
     }
 
-    const user = await userModel.findOne({ $or: [{ username }, { email }] });
+   
+    const isEmail = identifier.includes("@");
+    const user = await userModel.findOne(
+      isEmail ? { email: identifier } : { username: identifier }
+    );
+
     if (!user) {
       res.status(400).json({ message: "Invalid username, email, or password" });
       return;
     }
+
+    
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
       res.status(400).json({ message: "Invalid username, email, or password" });
       return;
     }
 
+   
     const tokens = generateTokens(user._id as string);
     if (!tokens) {
       res.status(500).json({ message: "Failed to generate tokens" });
       return;
     }
-    //console.log("Generated Access Token:", tokens.accessToken);
-    if (user.refeshtokens == undefined) {
+
+  
+    if (!user.refeshtokens) {
       user.refeshtokens = [];
     }
     user.refeshtokens.push(tokens.refreshToken);
-    user.save();
-    res.status(200).json({ ...tokens, _Id: user._id });
-  } catch (err) {
-    res.status(400).json({ message: "Error during login", error: err });
-  }
+    await user.save();
 
+    res.status(200).json({ ...tokens, _id: user._id });
+  } catch (err) {
+    console.error("Error during login:", err);
+    res.status(500).json({ message: "Error during login", error: err });
+  }
 };
 
 
