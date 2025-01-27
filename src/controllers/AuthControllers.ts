@@ -161,7 +161,6 @@ const validateRefreshToken = (refreshToken: string | undefined) => {
         reject("error");
         return;
       }
-      //check if token exists
       if (!user.refeshtokens || !user.refeshtokens.includes(refreshToken)) {
         user.refeshtokens = [];
         await user.save();
