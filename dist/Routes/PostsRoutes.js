@@ -7,6 +7,7 @@ const express_1 = __importDefault(require("express"));
 const router = express_1.default.Router();
 const PostControllers_1 = __importDefault(require("../controllers/PostControllers"));
 const AuthControllers_1 = require("../controllers/AuthControllers");
+const uploadMiddleware_1 = require("../middlewares/uploadMiddleware");
 /**
  * @swagger
  * tags:
@@ -159,4 +160,7 @@ router.get("/:_id", (req, res) => {
  *         description: Unauthorized
  */
 router.put("/:_id", AuthControllers_1.authMiddleware, PostControllers_1.default.updatePost.bind(PostControllers_1.default));
+router.post("/", AuthControllers_1.authMiddleware, uploadMiddleware_1.upload.single("image"), (req, res) => {
+    PostControllers_1.default.create(req, res);
+});
 exports.default = router;

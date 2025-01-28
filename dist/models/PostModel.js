@@ -38,6 +38,7 @@ const postSchema = new mongoose_1.Schema({
     title: { type: String, required: true },
     content: { type: String, required: true },
     owner: { type: String, required: true },
+    image: { type: String, required: true },
 });
 const Post = mongoose_1.default.model("Posts", postSchema);
 exports.default = Post;
