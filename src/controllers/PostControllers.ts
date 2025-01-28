@@ -35,28 +35,30 @@ class PostController extends BaseController<IPost> {
       return;
     }
   }
-
   async create(req: Request, res: Response) {
-    const userId = req.user?._id; // קבלת userId מתוך req.user
-    if (!userId) {
-        res.status(403).send("Unauthorized");
-        return;
+    const userId = req.user?._id; 
+    const image = req.file?.path; 
+  
+    if (!userId || !image) {
+      res.status(400).send("Unauthorized or missing image");
+      return;
     }
-
+  
     const post = {
-        title: req.body.title,
-        content: req.body.content,
-        owner: userId
+      title: req.body.title,
+      content: req.body.content,
+      owner: userId,
+      image,
     };
-
-    if (!post.owner || !post.content || !post.title) {
-        res.status(400).send("Missing Data");
-        return;
+  
+    if (!post.owner || !post.content || !post.title || !post.image) {
+      res.status(400).send("Missing Data");
+      return;
     }
-
+  
     req.body = post;
     return super.create(req, res);
-}
+  }
 
 
 }

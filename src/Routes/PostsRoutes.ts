@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 const router = express.Router();
 import PostControllers from '../controllers/PostControllers';
 import { authMiddleware } from '../controllers/AuthControllers';
+import { upload } from '../middlewares/uploadMiddleware';
 
 /**
  * @swagger
@@ -160,5 +161,10 @@ router.get("/:_id", (req: Request, res: Response) => {
  *         description: Unauthorized
  */
 router.put("/:_id", authMiddleware, PostControllers.updatePost.bind(PostControllers));
+
+
+router.post("/", authMiddleware, upload.single("image"), (req: Request, res: Response) => {
+  PostControllers.create(req, res);
+});
 
 export default router;
