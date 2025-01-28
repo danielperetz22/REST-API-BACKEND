@@ -171,29 +171,8 @@ router.post('/logout', AuthControllers.logout);
  */
 router.post('/refresh', AuthControllers.refresh);
 
-/**
- * @swagger
- * /auth/google:
- *   post:
- *     tags:
- *       - Auth
- *     summary: Log in with Google
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               token:
- *                 type: string
- *     responses:
- *       200:
- *         description: Logged in successfully
- *       400:
- *         description: Invalid Google token
- */
-router.post("/google",AuthControllers.googleLogin);
+
+router.post("/google",AuthControllers.googleLoginOrRegister);
 
 
 /**

@@ -201,29 +201,7 @@ router.post('/logout', AuthControllers_1.default.logout);
  *         description: Invalid or expired refresh token
  */
 router.post('/refresh', AuthControllers_1.default.refresh);
-/**
- * @swagger
- * /auth/google:
- *   post:
- *     tags:
- *       - Auth
- *     summary: Log in with Google
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               token:
- *                 type: string
- *     responses:
- *       200:
- *         description: Logged in successfully
- *       400:
- *         description: Invalid Google token
- */
-router.post("/google", AuthControllers_1.default.googleLogin);
+router.post("/google", AuthControllers_1.default.googleLoginOrRegister);
 /**
  * @swagger
  * /auth/testAuth:
