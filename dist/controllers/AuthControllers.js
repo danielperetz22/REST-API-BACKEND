@@ -20,12 +20,8 @@ const generateTokens = (_id) => {
 };
 const register = async (req, res) => {
     var _a;
-    const { username, email, password } = req.body;
+    const { email, password } = req.body;
     const profileImage = ((_a = req.file) === null || _a === void 0 ? void 0 : _a.path) || "";
-    if (!username || typeof username !== "string") {
-        res.status(400).json({ message: "Username is required and must be a string" });
-        return;
-    }
     if (!email || typeof email !== "string") {
         res.status(400).json({ message: "Email is required and must be a string" });
         return;
@@ -35,20 +31,14 @@ const register = async (req, res) => {
         return;
     }
     try {
-        const existingUser = await AuthModel_1.default.findOne({
-            $or: [{ username }, { email }],
-        });
+        const existingUser = await AuthModel_1.default.findOne({ email });
         if (existingUser) {
-            const errorMessage = existingUser.email === email
-                ? "Email already in use"
-                : "Username already in use";
-            res.status(400).json({ error: errorMessage });
+            res.status(400).json({ error: "Email already in use" });
             return;
         }
         const salt = await bcrypt_1.default.genSalt(10);
         const hashedPassword = await bcrypt_1.default.hash(password, salt);
         const user = await AuthModel_1.default.create({
-            username,
             email,
             password: hashedPassword,
             profileImage,
@@ -57,7 +47,6 @@ const register = async (req, res) => {
             message: "User registered successfully",
             user: {
                 _id: user._id,
-                username: user.username,
                 email: user.email,
                 profileImage: user.profileImage,
             },
@@ -70,21 +59,20 @@ const register = async (req, res) => {
     }
 };
 const login = async (req, res) => {
-    const { identifier, password } = req.body;
+    const { email, password } = req.body;
     try {
-        if (!identifier || !password) {
-            res.status(400).json({ message: "Identifier and password are required" });
+        if (!email || !password) {
+            res.status(400).json({ message: "email and password are required" });
             return;
         }
-        const isEmail = identifier.includes("@");
-        const user = await AuthModel_1.default.findOne(isEmail ? { email: identifier } : { username: identifier });
+        const user = await AuthModel_1.default.findOne({ email });
         if (!user) {
-            res.status(400).json({ message: "Invalid username, email, or password" });
+            res.status(400).json({ message: "Invalid email, or password" });
             return;
         }
         const validPassword = await bcrypt_1.default.compare(password, user.password);
         if (!validPassword) {
-            res.status(400).json({ message: "Invalid username, email, or password" });
+            res.status(400).json({ message: "Invalid email, or password" });
             return;
         }
         const tokens = generateTokens(user._id);
@@ -196,7 +184,7 @@ const authMiddleware = (req, res, next) => {
     });
 };
 exports.authMiddleware = authMiddleware;
-const googleLogin = async (req, res) => {
+const googleLoginOrRegister = async (req, res) => {
     const { token } = req.body;
     try {
         const ticket = await client.verifyIdToken({
@@ -209,15 +197,21 @@ const googleLogin = async (req, res) => {
             return;
         }
         const { email, name, picture } = payload;
+        if (!email) {
+            res.status(400).json({ message: "Google account email is required." });
+            return;
+        }
+        // חפש משתמש לפי אימייל
         let user = await AuthModel_1.default.findOne({ email });
         if (!user) {
+            // משתמש חדש: יצירת משתמש רק עם המידע שמגיע מגוגל
             user = await AuthModel_1.default.create({
-                username: name,
                 email,
-                password: "",
-                profileImage: picture,
+                password: "", // לא נדרשת סיסמה
+                profileImage: picture || "",
             });
         }
+        // יצירת טוקנים
         const tokens = generateTokens(user._id);
         if (!tokens) {
             res.status(500).json({ message: "Failed to generate tokens." });
@@ -225,13 +219,13 @@ const googleLogin = async (req, res) => {
         }
         res.status(200).json(Object.assign(Object.assign({}, tokens), { user: {
                 _id: user._id,
-                username: user.username,
                 email: user.email,
                 profileImage: user.profileImage,
             } }));
     }
     catch (error) {
-        res.status(500).json({ message: "Error logging in with Google.", error });
+        console.error("Error during Google login/register:", error);
+        res.status(500).json({ message: "Error logging in/registering with Google.", error });
     }
 };
-exports.default = { register, login, refresh, logout, googleLogin };
+exports.default = { register, login, refresh, logout, googleLoginOrRegister };
