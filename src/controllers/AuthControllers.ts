@@ -292,6 +292,85 @@ const googleLoginOrRegister = async (req: Request, res: Response) => {
   }
 };
 
+const getUserProfile = async (req: Request, res: Response) => {
+  try {
+    console.log("req.user:", req.user);
+
+    if (!req.user || !req.user._id) {
+       res.status(400).json({ message: "Invalid user ID" });
+       return
+    }
+
+    const user = await userModel.findById(req.user._id);
+    if (!user) {
+       res.status(404).json({ message: "User not found" });
+       return
+    }
+    const profileImageUrl = user.profileImage
+    ? `http://localhost:3000/${user.profileImage.replace(/\\/g, "/")}` // החלפת `\` ל-`/`
+    : "https://example.com/default-avatar.jpg";
+    console.log("User profile data:", user);
+
+    res.status(200).json({
+      _id: user._id,
+      email: user.email,
+      profileImage: profileImageUrl,
+    });
+  } catch (err) {
+    console.error("Error getting user profile:", err);
+    res.status(500).json({ message: "Internal server error", error: err });
+  }
+};
+
+const updateUserProfile = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?._id;
+
+    if (!userId) {
+       res.status(400).json({ message: "Invalid user ID" });
+       return
+    }
+
+    const { email, profileImage } = req.body;
+
+    if (email && typeof email !== "string") {
+       res.status(400).json({ message: "Invalid email format" });
+      return
+    }
+    if (profileImage && typeof profileImage !== "string") {
+       res.status(400).json({ message: "Invalid profileImage format" });
+       return
+    }
+
+    const updatedUser = await userModel.findByIdAndUpdate(
+      userId,
+      {
+        ...(email && { email }), 
+        ...(profileImage && { profileImage }),
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+       res.status(404).json({ message: "User not found" });
+       return
+    }
+
+    res.status(200).json({
+      message: "User profile updated successfully",
+      user: {
+        _id: updatedUser._id,
+        email: updatedUser.email,
+        profileImage: updatedUser.profileImage,
+      },
+    });
+  } catch (err) {
+    console.error("Error updating user profile:", err);
+    res.status(500).json({ message: "Internal server error", error: err });
+  }
+};
 
 
-export default { register, login, refresh, logout, googleLoginOrRegister };
+
+
+export default { register, login, refresh, logout, googleLoginOrRegister, getUserProfile, updateUserProfile };
