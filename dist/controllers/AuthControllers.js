@@ -187,33 +187,36 @@ exports.authMiddleware = authMiddleware;
 const googleLoginOrRegister = async (req, res) => {
     const { token } = req.body;
     try {
+        console.log("Received token:", token);
         const ticket = await client.verifyIdToken({
             idToken: token,
             audience: process.env.GOOGLE_CLIENT_ID,
         });
         const payload = ticket.getPayload();
         if (!payload) {
+            console.log("Invalid Google token");
             res.status(400).json({ message: "Invalid Google token." });
             return;
         }
+        console.log("Google payload:", payload);
         const { email, name, picture } = payload;
         if (!email) {
+            console.log("Email is missing in Google payload");
             res.status(400).json({ message: "Google account email is required." });
             return;
         }
-        // חפש משתמש לפי אימייל
         let user = await AuthModel_1.default.findOne({ email });
         if (!user) {
-            // משתמש חדש: יצירת משתמש רק עם המידע שמגיע מגוגל
+            console.log("Creating new user for email:", email);
             user = await AuthModel_1.default.create({
                 email,
-                password: "", // לא נדרשת סיסמה
+                password: "",
                 profileImage: picture || "",
             });
         }
-        // יצירת טוקנים
         const tokens = generateTokens(user._id);
         if (!tokens) {
+            console.log("Failed to generate tokens");
             res.status(500).json({ message: "Failed to generate tokens." });
             return;
         }
@@ -228,4 +231,67 @@ const googleLoginOrRegister = async (req, res) => {
         res.status(500).json({ message: "Error logging in/registering with Google.", error });
     }
 };
-exports.default = { register, login, refresh, logout, googleLoginOrRegister };
+const getUserProfile = async (req, res) => {
+    try {
+        console.log("req.user:", req.user);
+        if (!req.user || !req.user._id) {
+            res.status(400).json({ message: "Invalid user ID" });
+            return;
+        }
+        const user = await AuthModel_1.default.findById(req.user._id);
+        if (!user) {
+            res.status(404).json({ message: "User not found" });
+            return;
+        }
+        const profileImageUrl = user.profileImage
+            ? `http://localhost:3000/${user.profileImage.replace(/\\/g, "/")}` // החלפת `\` ל-`/`
+            : "https://example.com/default-avatar.jpg";
+        console.log("User profile data:", user);
+        res.status(200).json({
+            _id: user._id,
+            email: user.email,
+            profileImage: profileImageUrl,
+        });
+    }
+    catch (err) {
+        console.error("Error getting user profile:", err);
+        res.status(500).json({ message: "Internal server error", error: err });
+    }
+};
+const updateUserProfile = async (req, res) => {
+    var _a;
+    try {
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
+        if (!userId) {
+            res.status(400).json({ message: "Invalid user ID" });
+            return;
+        }
+        const { email, profileImage } = req.body;
+        if (email && typeof email !== "string") {
+            res.status(400).json({ message: "Invalid email format" });
+            return;
+        }
+        if (profileImage && typeof profileImage !== "string") {
+            res.status(400).json({ message: "Invalid profileImage format" });
+            return;
+        }
+        const updatedUser = await AuthModel_1.default.findByIdAndUpdate(userId, Object.assign(Object.assign({}, (email && { email })), (profileImage && { profileImage })), { new: true });
+        if (!updatedUser) {
+            res.status(404).json({ message: "User not found" });
+            return;
+        }
+        res.status(200).json({
+            message: "User profile updated successfully",
+            user: {
+                _id: updatedUser._id,
+                email: updatedUser.email,
+                profileImage: updatedUser.profileImage,
+            },
+        });
+    }
+    catch (err) {
+        console.error("Error updating user profile:", err);
+        res.status(500).json({ message: "Internal server error", error: err });
+    }
+};
+exports.default = { register, login, refresh, logout, googleLoginOrRegister, getUserProfile, updateUserProfile };

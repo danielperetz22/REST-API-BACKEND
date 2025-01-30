@@ -28,6 +28,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/post', postRoutes);
 app.use('/comment', CommentRoutes);
 app.use('/auth', AuthRoutes);
+app.use("/uploads", express.static("uploads"));
+
 
 const options = {
   definition: {

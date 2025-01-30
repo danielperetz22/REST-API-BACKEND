@@ -31,6 +31,7 @@ app.use(body_parser_1.default.urlencoded({ extended: true }));
 app.use('/post', PostsRoutes_1.default);
 app.use('/comment', CommentRoutes_1.default);
 app.use('/auth', AuthRoutes_1.default);
+app.use("/uploads", express_1.default.static("uploads"));
 const options = {
     definition: {
         openapi: "3.0.0",
