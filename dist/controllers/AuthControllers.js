@@ -187,33 +187,36 @@ exports.authMiddleware = authMiddleware;
 const googleLoginOrRegister = async (req, res) => {
     const { token } = req.body;
     try {
+        console.log("Received token:", token);
         const ticket = await client.verifyIdToken({
             idToken: token,
             audience: process.env.GOOGLE_CLIENT_ID,
         });
         const payload = ticket.getPayload();
         if (!payload) {
+            console.log("Invalid Google token");
             res.status(400).json({ message: "Invalid Google token." });
             return;
         }
+        console.log("Google payload:", payload);
         const { email, name, picture } = payload;
         if (!email) {
+            console.log("Email is missing in Google payload");
             res.status(400).json({ message: "Google account email is required." });
             return;
         }
-        // חפש משתמש לפי אימייל
         let user = await AuthModel_1.default.findOne({ email });
         if (!user) {
-            // משתמש חדש: יצירת משתמש רק עם המידע שמגיע מגוגל
+            console.log("Creating new user for email:", email);
             user = await AuthModel_1.default.create({
                 email,
-                password: "", // לא נדרשת סיסמה
+                password: "",
                 profileImage: picture || "",
             });
         }
-        // יצירת טוקנים
         const tokens = generateTokens(user._id);
         if (!tokens) {
+            console.log("Failed to generate tokens");
             res.status(500).json({ message: "Failed to generate tokens." });
             return;
         }
