@@ -15,9 +15,8 @@ declare global {
     }
   }
 }
-
-const generateTokens = (_id : string): { refreshToken: string; accessToken: string } | null => {
-  if (process.env.ACCESS_TOKEN_SECRET===undefined) {
+const generateTokens = (_id: string): { refreshToken: string; accessToken: string } | null => {
+  if (!process.env.ACCESS_TOKEN_SECRET) {
     return null;
   }
   const rand = Math.random();
@@ -28,13 +27,16 @@ const generateTokens = (_id : string): { refreshToken: string; accessToken: stri
   );
 
   const refreshToken = jwt.sign(
-    { _id: _id, rand:rand },
+    { _id: _id, rand: rand },
     process.env.ACCESS_TOKEN_SECRET,
     { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION }
   );
 
-  return { refreshToken:refreshToken, accessToken:accessToken };
+ 
+
+  return { refreshToken, accessToken };
 };
+
 const register = async (req: Request, res: Response) => {
   const { email, password } = req.body;
   const profileImage = req.file?.path || ""; 
@@ -132,44 +134,64 @@ const login = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error during login", error: err });
   }
 };
-
-
 const validateRefreshToken = (refreshToken: string | undefined) => {
   return new Promise<Document<unknown, {}, IUser> & IUser>((resolve, reject) => {
-    if (refreshToken == null) {
+    if (!refreshToken) {
       reject("error");
       return;
     }
-  if (!process.env.ACCESS_TOKEN_SECRET) {
-    reject("error");
-      return;
-  }
+   
 
-  jwt.verify(refreshToken, process.env.ACCESS_TOKEN_SECRET, async (err: any, payload: any) => {
-    if (err) {
-      reject(err);
+    if (!process.env.ACCESS_TOKEN_SECRET) {
+      reject("error");
       return;
     }
-    const userId = (payload as Payload)._id;
-    try {
-      const user = await userModel.findById(userId);
-      if (!user) {
-        reject("error");
-        return;
-      }
-      if (!user.refeshtokens || !user.refeshtokens.includes(refreshToken)) {
-        user.refeshtokens = [];
-        await user.save();
+
+    jwt.verify(refreshToken, process.env.ACCESS_TOKEN_SECRET, async (err: any, payload: any) => {
+      if (err) {
+     
         reject(err);
         return;
       }
-      resolve(user);
-    } catch (err) {
-      reject(err);
-    }
+
+      
+
+      const userId = (payload as Payload)._id;
+      if (!userId) {
+      
+        reject("error");
+        return;
+      }
+     
+
+      try {
+        const user = await userModel.findById(userId);
+        if (!user) {
+         
+          reject("error");
+          return;
+        }
+
+     
+
+        if (!user.refeshtokens || !user.refeshtokens.includes(refreshToken)) {
+        
+          reject("error");
+          return;
+        }
+
+        
+        resolve(user);
+      } catch (err) {
+       
+        reject(err);
+      }
+    });
   });
-});
-}
+};
+
+
+
 type Payload = {
   _id: string;
 }
@@ -197,12 +219,13 @@ const refresh = async (req: Request, res: Response) => {
 
 const logout = async (req: Request, res: Response) => {
   try {
+    console.log("Logout request body:", req.body);
     const user = await validateRefreshToken(req.body.refreshToken);
     if (!user) {
       res.status(400).send("error");
       return;
     }
-    //remove the token from the user
+
     user.refeshtokens = user.refeshtokens!.filter((token) => token !== req.body.refreshToken);
     await user.save();
     res.status(200).send("logged out");
@@ -307,7 +330,7 @@ const getUserProfile = async (req: Request, res: Response) => {
        return
     }
     const profileImageUrl = user.profileImage
-    ? `http://localhost:3000/${user.profileImage.replace(/\\/g, "/")}` // החלפת `\` ל-`/`
+    ? `http://localhost:3000/${user.profileImage.replace(/\\/g, "/")}` 
     : "https://example.com/default-avatar.jpg";
     console.log("User profile data:", user);
 

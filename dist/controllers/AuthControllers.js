@@ -10,13 +10,13 @@ const AuthModel_1 = __importDefault(require("../models/AuthModel"));
 const google_auth_library_1 = require("google-auth-library");
 const client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const generateTokens = (_id) => {
-    if (process.env.ACCESS_TOKEN_SECRET === undefined) {
+    if (!process.env.ACCESS_TOKEN_SECRET) {
         return null;
     }
     const rand = Math.random();
     const accessToken = jsonwebtoken_1.default.sign({ _id: _id, rand: rand }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.TOKEN_EXPIRATION });
     const refreshToken = jsonwebtoken_1.default.sign({ _id: _id, rand: rand }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION });
-    return { refreshToken: refreshToken, accessToken: accessToken };
+    return { refreshToken, accessToken };
 };
 const register = async (req, res) => {
     var _a;
@@ -94,7 +94,7 @@ const login = async (req, res) => {
 };
 const validateRefreshToken = (refreshToken) => {
     return new Promise((resolve, reject) => {
-        if (refreshToken == null) {
+        if (!refreshToken) {
             reject("error");
             return;
         }
@@ -108,6 +108,10 @@ const validateRefreshToken = (refreshToken) => {
                 return;
             }
             const userId = payload._id;
+            if (!userId) {
+                reject("error");
+                return;
+            }
             try {
                 const user = await AuthModel_1.default.findById(userId);
                 if (!user) {
@@ -115,9 +119,7 @@ const validateRefreshToken = (refreshToken) => {
                     return;
                 }
                 if (!user.refeshtokens || !user.refeshtokens.includes(refreshToken)) {
-                    user.refeshtokens = [];
-                    await user.save();
-                    reject(err);
+                    reject("error");
                     return;
                 }
                 resolve(user);
@@ -147,12 +149,12 @@ const refresh = async (req, res) => {
 };
 const logout = async (req, res) => {
     try {
+        console.log("Logout request body:", req.body);
         const user = await validateRefreshToken(req.body.refreshToken);
         if (!user) {
             res.status(400).send("error");
             return;
         }
-        //remove the token from the user
         user.refeshtokens = user.refeshtokens.filter((token) => token !== req.body.refreshToken);
         await user.save();
         res.status(200).send("logged out");
@@ -244,7 +246,7 @@ const getUserProfile = async (req, res) => {
             return;
         }
         const profileImageUrl = user.profileImage
-            ? `http://localhost:3000/${user.profileImage.replace(/\\/g, "/")}` // החלפת `\` ל-`/`
+            ? `http://localhost:3000/${user.profileImage.replace(/\\/g, "/")}`
             : "https://example.com/default-avatar.jpg";
         console.log("User profile data:", user);
         res.status(200).json({
