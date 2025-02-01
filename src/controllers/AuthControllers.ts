@@ -36,7 +36,7 @@ const generateTokens = (_id : string): { refreshToken: string; accessToken: stri
   return { refreshToken:refreshToken, accessToken:accessToken };
 };
 const register = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { email, password, username } = req.body;
   const profileImage = req.file?.path || ""; 
 
  
@@ -46,6 +46,10 @@ const register = async (req: Request, res: Response) => {
   }
   if (!password || typeof password !== "string") {
     res.status(400).json({ message: "Password is required and must be a string" });
+    return;
+  }
+  if (!username || typeof username !== "string") {  // דרישת שם משתמש
+    res.status(400).json({ message: "Username is required and must be a string" });
     return;
   }
 
@@ -66,6 +70,7 @@ const register = async (req: Request, res: Response) => {
    
     const user: IUser = await userModel.create({
       email,
+      username,
       password: hashedPassword,
       profileImage, 
     });
@@ -76,6 +81,7 @@ const register = async (req: Request, res: Response) => {
       user: {
         _id: user._id,
         email: user.email,
+        username: user.username,
         profileImage: user.profileImage, 
       },
     });
@@ -266,6 +272,7 @@ const googleLoginOrRegister = async (req: Request, res: Response) => {
       console.log("Creating new user for email:", email);
       user = await userModel.create({
         email,
+        username: name || email,
         password: "",
         profileImage: picture || "",
       });
@@ -278,11 +285,19 @@ const googleLoginOrRegister = async (req: Request, res: Response) => {
       return;
     }
 
+    if (!user.refeshtokens) {
+      user.refeshtokens = [];
+    }
+    user.refeshtokens.push(tokens.refreshToken);
+    await user.save();
+
+
     res.status(200).json({
       ...tokens,
       user: {
         _id: user._id,
         email: user.email,
+        username: user.username,
         profileImage: user.profileImage,
       },
     });
@@ -307,12 +322,13 @@ const getUserProfile = async (req: Request, res: Response) => {
        return
     }
     const profileImageUrl = user.profileImage
-    ? `http://localhost:3000/${user.profileImage.replace(/\\/g, "/")}` // החלפת `\` ל-`/`
+    ? `http://localhost:3000/${user.profileImage.replace(/\\/g, "/")}` 
     : "https://example.com/default-avatar.jpg";
     console.log("User profile data:", user);
 
     res.status(200).json({
       _id: user._id,
+      username: user.username,
       email: user.email,
       profileImage: profileImageUrl,
     });
@@ -325,51 +341,101 @@ const getUserProfile = async (req: Request, res: Response) => {
 const updateUserProfile = async (req: Request, res: Response) => {
   try {
     const userId = req.user?._id;
-
     if (!userId) {
+      console.log("Error: No user ID found in request");
        res.status(400).json({ message: "Invalid user ID" });
        return
     }
 
-    const { email, profileImage } = req.body;
-
-    if (email && typeof email !== "string") {
-       res.status(400).json({ message: "Invalid email format" });
-      return
+    const currentUser = await userModel.findById(userId);
+    if (!currentUser) {
+      console.log("User not found in DB");
+       res.status(404).json({ message: "User not found" });
+       return
     }
-    if (profileImage && typeof profileImage !== "string") {
-       res.status(400).json({ message: "Invalid profileImage format" });
+    console.log("Current user state:", currentUser);
+
+    const { username, email, oldPassword,confirmNewPassword, newPassword } = req.body;
+    const updates: Partial<IUser> = {};
+
+    if (username && username.trim() !== "") {
+      updates.username = username.trim();
+    }
+
+    if (req.file) {
+      const profileImagePath = `uploads/${req.file.filename}`;
+      updates.profileImage = profileImagePath;
+    }
+
+    if (email && email.trim() !== "") {
+      const newEmail = email.trim();
+      if(newEmail != currentUser.email){
+      const userWithSameEmail = await userModel.findOne({ email: newEmail });
+      if (userWithSameEmail && userWithSameEmail._id !== userId) {
+         res.status(400).json({ message: "Email already in use" });
+         return
+      }
+      updates.email = newEmail;
+    }
+  }
+
+    if (newPassword && newPassword.trim() !== "") {
+      if (newPassword !== confirmNewPassword) {
+         res.status(400).json({ message: "New passwords do not match" });
+        return
+      }
+      const hasLocalPassword = currentUser.password && currentUser.password.trim() !== "";
+      if (hasLocalPassword) {
+        if (!oldPassword) {
+           res.status(400).json({ message: "Old password is required to change password" });
+           return
+        }
+        const isMatch = await bcrypt.compare(oldPassword, currentUser.password);
+        if (!isMatch) {
+           res.status(400).json({ message: "Incorrect old password" });
+           return
+        }
+      }
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newPassword.trim(), salt);
+      updates.password = hashedPassword;
+    }
+      
+    if (Object.keys(updates).length === 0) {
+       res.status(400).json({ message: "No updates provided" });
        return
     }
 
-    const updatedUser = await userModel.findByIdAndUpdate(
-      userId,
-      {
-        ...(email && { email }), 
-        ...(profileImage && { profileImage }),
-      },
-      { new: true }
-    );
-
+    const updatedUser = await userModel.findByIdAndUpdate(userId, { $set: updates }, { new: true, runValidators: true });
     if (!updatedUser) {
+      console.log("User not found after update");
        res.status(404).json({ message: "User not found" });
        return
     }
 
-    res.status(200).json({
+    const profileImageUrl = updatedUser.profileImage
+      ? `http://localhost:3000/${updatedUser.profileImage.replace(/\\/g, "/")}`
+      : null;
+
+    const response = {
       message: "User profile updated successfully",
       user: {
         _id: updatedUser._id,
         email: updatedUser.email,
-        profileImage: updatedUser.profileImage,
-      },
-    });
+        username: updatedUser.username,
+        profileImage: profileImageUrl
+      }
+    };
+
+    res.status(200).json(response);
   } catch (err) {
-    console.error("Error updating user profile:", err);
-    res.status(500).json({ message: "Internal server error", error: err });
+    console.error("Error in updateUserProfile:", err);
+    res.status(500).json({ 
+      message: "Internal server error", 
+      error: err instanceof Error ? err.message : String(err)
+    });
   }
 };
-
 
 
 
