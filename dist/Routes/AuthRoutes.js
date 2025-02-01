@@ -203,7 +203,7 @@ router.post('/logout', AuthControllers_1.default.logout);
 router.post('/refresh', AuthControllers_1.default.refresh);
 router.post("/google", AuthControllers_1.default.googleLoginOrRegister);
 router.get("/profile", AuthControllers_1.authMiddleware, AuthControllers_1.default.getUserProfile);
-router.put("/profile", AuthControllers_1.authMiddleware, AuthControllers_1.default.updateUserProfile);
+router.put("/profile", AuthControllers_1.authMiddleware, uploadMiddleware_1.upload.single('profileImage'), AuthControllers_1.default.updateUserProfile);
 /**
  * @swagger
  * /auth/testAuth:

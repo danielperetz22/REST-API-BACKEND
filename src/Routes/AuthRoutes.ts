@@ -174,7 +174,7 @@ router.post('/refresh', AuthControllers.refresh);
 
 router.post("/google",AuthControllers.googleLoginOrRegister);
 router.get("/profile", authMiddleware, AuthControllers.getUserProfile);
-router.put("/profile", authMiddleware, AuthControllers.updateUserProfile);
+router.put("/profile", authMiddleware,upload.single('profileImage'), AuthControllers.updateUserProfile);
 
 
 /**
