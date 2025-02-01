@@ -10,49 +10,43 @@ class PostController extends baseController_1.BaseController {
         super(model);
     }
     async updatePost(req, res) {
-        const askerID = req.params._id;
-        const newtitle = req.body.title;
-        const newContent = req.body.content;
         try {
-            const postToUpdate = await PostModel_1.default.findByIdAndUpdate(askerID, { title: newtitle, content: newContent }, { new: true });
-            if (!newtitle || !newContent) {
-                res.status(400).send("Missing Data");
+            const { title, content } = req.body;
+            if (!title || !content) {
+                res.status(400).json({ message: "Missing data" });
                 return;
             }
+            const postToUpdate = await PostModel_1.default.findByIdAndUpdate(req.params._id, { title, content }, { new: true });
             if (!postToUpdate) {
-                res.status(404).send("could not find post");
+                res.status(404).json({ message: "Post not found" });
                 return;
             }
-            else {
-                res.status(200).send(postToUpdate);
-                return;
-            }
+            res.status(200).json(postToUpdate);
         }
         catch (error) {
-            res.status(400).send(error);
-            return;
+            res.status(500).json({ message: "Error updating post", error });
         }
     }
     async create(req, res) {
         var _a, _b;
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
-        const image = (_b = req.file) === null || _b === void 0 ? void 0 : _b.path;
-        if (!userId || !image) {
-            res.status(400).send("Unauthorized or missing image");
-            return;
+        try {
+            const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
+            const image = (_b = req.file) === null || _b === void 0 ? void 0 : _b.path;
+            if (!userId) {
+                res.status(401).json({ message: "Unauthorized" });
+                return;
+            }
+            if (!req.body.title || !req.body.content) {
+                res.status(400).json({ message: "Missing required fields" });
+                return;
+            }
+            req.body.owner = userId;
+            req.body.image = image;
+            await super.create(req, res);
         }
-        const post = {
-            title: req.body.title,
-            content: req.body.content,
-            owner: userId,
-            image,
-        };
-        if (!post.owner || !post.content || !post.title || !post.image) {
-            res.status(400).send("Missing Data");
-            return;
+        catch (error) {
+            res.status(500).json({ message: "Error creating post", error });
         }
-        req.body = post;
-        return super.create(req, res);
     }
 }
 exports.default = new PostController(PostModel_1.default);
