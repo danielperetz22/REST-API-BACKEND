@@ -158,7 +158,6 @@ const refresh = async (req, res) => {
 };
 const logout = async (req, res) => {
     try {
-        console.log("Logout request body:", req.body);
         const user = await validateRefreshToken(req.body.refreshToken);
         if (!user) {
             res.status(400).send("error");
@@ -251,7 +250,6 @@ const googleLoginOrRegister = async (req, res) => {
 };
 const getUserProfile = async (req, res) => {
     try {
-        console.log("req.user:", req.user);
         if (!req.user || !req.user._id) {
             res.status(400).json({ message: "Invalid user ID" });
             return;
@@ -264,7 +262,6 @@ const getUserProfile = async (req, res) => {
         const profileImageUrl = user.profileImage
             ? `http://localhost:3000/${user.profileImage.replace(/\\/g, "/")}`
             : "https://example.com/default-avatar.jpg";
-        console.log("User profile data:", user);
         res.status(200).json({
             _id: user._id,
             username: user.username,
@@ -292,7 +289,6 @@ const updateUserProfile = async (req, res) => {
             res.status(404).json({ message: "User not found" });
             return;
         }
-        console.log("Current user state:", currentUser);
         const { username, email, oldPassword, confirmNewPassword, newPassword } = req.body;
         const updates = {};
         if (username && username.trim() !== "") {
@@ -340,7 +336,6 @@ const updateUserProfile = async (req, res) => {
         }
         const updatedUser = await AuthModel_1.default.findByIdAndUpdate(userId, { $set: updates }, { new: true, runValidators: true });
         if (!updatedUser) {
-            console.log("User not found after update");
             res.status(404).json({ message: "User not found" });
             return;
         }
