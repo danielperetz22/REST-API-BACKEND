@@ -11,11 +11,14 @@ const google_auth_library_1 = require("google-auth-library");
 const client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const generateTokens = (_id) => {
     if (!process.env.ACCESS_TOKEN_SECRET) {
+        console.error("Missing ACCESS_TOKEN_SECRET environment variable.");
         return null;
     }
     const rand = Math.random();
-    const accessToken = jsonwebtoken_1.default.sign({ _id: _id, rand: rand }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.TOKEN_EXPIRATION });
-    const refreshToken = jsonwebtoken_1.default.sign({ _id: _id, rand: rand }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION });
+    const accessToken = jsonwebtoken_1.default.sign({ _id: _id, rand: rand }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.TOKEN_EXPIRATION || '1h' } // שימוש ישיר במחרוזת
+    );
+    const refreshToken = jsonwebtoken_1.default.sign({ _id: _id, rand: rand }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION || '7d' } // שימוש ישיר במחרוזת
+    );
     return { refreshToken, accessToken };
 };
 const register = async (req, res) => {

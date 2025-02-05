@@ -17,25 +17,26 @@ declare global {
 }
 const generateTokens = (_id: string): { refreshToken: string; accessToken: string } | null => {
   if (!process.env.ACCESS_TOKEN_SECRET) {
+    console.error("Missing ACCESS_TOKEN_SECRET environment variable.");
     return null;
   }
+
   const rand = Math.random();
   const accessToken = jwt.sign(
     { _id: _id, rand: rand },
-    process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: process.env.TOKEN_EXPIRATION }
+    process.env.ACCESS_TOKEN_SECRET as string,  
+    { expiresIn: process.env.TOKEN_EXPIRATION || '1h' }  // שימוש ישיר במחרוזת
   );
 
   const refreshToken = jwt.sign(
     { _id: _id, rand: rand },
-    process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION }
+    process.env.ACCESS_TOKEN_SECRET as string,      
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION || '7d' } // שימוש ישיר במחרוזת
   );
-
- 
 
   return { refreshToken, accessToken };
 };
+
 
 const register = async (req: Request, res: Response) => {
   const { email, password, username } = req.body;
