@@ -1,10 +1,11 @@
 import { BaseController } from "./baseController";
 import Post, { IPost } from "../models/PostModel";
+import Comment from "../models/CommentModel";
 import { Request, Response } from "express";
 
 class PostController extends BaseController<IPost> {
-  constructor(model: any) {
-    super(model);
+  constructor() {
+    super(Post);
   }
 
   async updatePost(req: Request, res: Response): Promise<void> {
@@ -49,12 +50,30 @@ class PostController extends BaseController<IPost> {
 
       req.body.owner = userId;
       req.body.image = image;
+      req.body.comments = [];
 
       await super.create(req, res);
     } catch (error) {
       res.status(500).json({ message: "Error creating post", error });
     }
   }
+
+  async getAll(req: Request, res: Response): Promise<void> {
+    try {
+      const posts = await Post.find();
+
+      const postsWithComments = await Promise.all(
+        posts.map(async (post) => {
+          const comments = await Comment.find({ postId: post._id });
+          return { ...post.toObject(), comments };
+        })
+      );
+
+      res.status(200).json(postsWithComments);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching posts", error });
+    }
+  }
 }
 
-export default new PostController(Post);
+export default new PostController();

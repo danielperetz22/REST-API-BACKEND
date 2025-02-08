@@ -5,9 +5,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const baseController_1 = require("./baseController");
 const PostModel_1 = __importDefault(require("../models/PostModel"));
+const CommentModel_1 = __importDefault(require("../models/CommentModel"));
 class PostController extends baseController_1.BaseController {
-    constructor(model) {
-        super(model);
+    constructor() {
+        super(PostModel_1.default);
     }
     async updatePost(req, res) {
         try {
@@ -42,11 +43,25 @@ class PostController extends baseController_1.BaseController {
             }
             req.body.owner = userId;
             req.body.image = image;
+            req.body.comments = [];
             await super.create(req, res);
         }
         catch (error) {
             res.status(500).json({ message: "Error creating post", error });
         }
     }
+    async getAll(req, res) {
+        try {
+            const posts = await PostModel_1.default.find();
+            const postsWithComments = await Promise.all(posts.map(async (post) => {
+                const comments = await CommentModel_1.default.find({ postId: post._id });
+                return Object.assign(Object.assign({}, post.toObject()), { comments });
+            }));
+            res.status(200).json(postsWithComments);
+        }
+        catch (error) {
+            res.status(500).json({ message: "Error fetching posts", error });
+        }
+    }
 }
-exports.default = new PostController(PostModel_1.default);
+exports.default = new PostController();
