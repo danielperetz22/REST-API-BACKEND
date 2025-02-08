@@ -17,25 +17,26 @@ declare global {
 }
 const generateTokens = (_id: string): { refreshToken: string; accessToken: string } | null => {
   if (!process.env.ACCESS_TOKEN_SECRET) {
+    console.error("Missing ACCESS_TOKEN_SECRET environment variable.");
     return null;
   }
+
   const rand = Math.random();
   const accessToken = jwt.sign(
     { _id: _id, rand: rand },
-    process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: process.env.TOKEN_EXPIRATION }
+    process.env.ACCESS_TOKEN_SECRET as string,  
+    { expiresIn: process.env.TOKEN_EXPIRATION || '1h' }  // שימוש ישיר במחרוזת
   );
 
   const refreshToken = jwt.sign(
     { _id: _id, rand: rand },
-    process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION }
+    process.env.ACCESS_TOKEN_SECRET as string,      
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION || '7d' } // שימוש ישיר במחרוזת
   );
-
- 
 
   return { refreshToken, accessToken };
 };
+
 
 const register = async (req: Request, res: Response) => {
   const { email, password, username } = req.body;
@@ -225,7 +226,6 @@ const refresh = async (req: Request, res: Response) => {
 
 const logout = async (req: Request, res: Response) => {
   try {
-    console.log("Logout request body:", req.body);
     const user = await validateRefreshToken(req.body.refreshToken);
     if (!user) {
       res.status(400).send("error");
@@ -332,7 +332,7 @@ const googleLoginOrRegister = async (req: Request, res: Response) => {
 
 const getUserProfile = async (req: Request, res: Response) => {
   try {
-    console.log("req.user:", req.user);
+  
 
     if (!req.user || !req.user._id) {
        res.status(400).json({ message: "Invalid user ID" });
@@ -347,7 +347,7 @@ const getUserProfile = async (req: Request, res: Response) => {
     const profileImageUrl = user.profileImage
     ? `http://localhost:3000/${user.profileImage.replace(/\\/g, "/")}` 
     : "https://example.com/default-avatar.jpg";
-    console.log("User profile data:", user);
+    
 
     res.status(200).json({
       _id: user._id,
@@ -376,7 +376,7 @@ const updateUserProfile = async (req: Request, res: Response) => {
        res.status(404).json({ message: "User not found" });
        return
     }
-    console.log("Current user state:", currentUser);
+   
 
     const { username, email, oldPassword,confirmNewPassword, newPassword } = req.body;
     const updates: Partial<IUser> = {};
@@ -431,7 +431,7 @@ const updateUserProfile = async (req: Request, res: Response) => {
 
     const updatedUser = await userModel.findByIdAndUpdate(userId, { $set: updates }, { new: true, runValidators: true });
     if (!updatedUser) {
-      console.log("User not found after update");
+      
        res.status(404).json({ message: "User not found" });
        return
     }
