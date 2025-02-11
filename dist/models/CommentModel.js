@@ -14,6 +14,9 @@ const comments_Schema = new mongoose_1.default.Schema({
     owner: {
         type: String, required: true,
     },
+    email: {
+        type: String, required: true
+    },
 });
 const Comment = mongoose_1.default.model("Comments", comments_Schema);
 exports.default = Comment;

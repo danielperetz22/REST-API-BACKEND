@@ -14,20 +14,30 @@ class CommentController extends baseController_1.BaseController {
         console.log("GET ALL COMMENTS ON SPECIFIC POST METHOD");
         console.log(postID);
         try {
-            const findAllComments = await CommentModel_1.default.find({ postId: postID });
-            if (findAllComments.length === 0) {
-                res.status(400).send("There are not comments on this post");
-                return;
-            }
-            else {
-                res.status(200).send(findAllComments);
-                return;
-            }
+            const findAllComments = await CommentModel_1.default.find({ postId: postID }).select('content owner email');
+            res.status(200).json(findAllComments);
         }
         catch (error) {
-            res.status(400).send(error);
+            res.status(500).json({ message: "Error retrieving comments", error });
         }
     }
+    // async gatAllCommentsByPostId(req: Request, res: Response) {
+    //   const postID = req.query.postId;
+    //   console.log("GET ALL COMMENTS ON SPECIFIC POST METHOD");
+    //   console.log(postID);
+    //   try {
+    //     const findAllComments = await Comment.find({ postId: postID });
+    //     if (findAllComments.length === 0) {
+    //       res.status(400).send("There are not comments on this post");
+    //       return;
+    //     } else {
+    //       res.status(200).send(findAllComments);
+    //       return;
+    //     }
+    //   } catch (error) {
+    //     res.status(400).send(error);
+    //   }
+    // }
     async updateComment(req, res) {
         const commentID = req.params._id;
         const newContent = req.body.comment;

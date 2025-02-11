@@ -4,6 +4,7 @@ export interface IPost {
   title: string;
   content: string;
   owner: string;
+  email?: string;
   image: string;
   comments?: string[];
 }
@@ -13,6 +14,7 @@ const postSchema = new Schema<IPost>(
     title: { type: String, required: true },
     content: { type: String, required: true },
     owner: { type: String, required: true },
+    email: { type: String , required: true },
     image: { type: String, required: true },
     comments: { type: [String], default: [] }, 
   }
