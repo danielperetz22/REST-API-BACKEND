@@ -5,6 +5,7 @@ export interface IComment{
   content: string;
   postId: string; 
   owner: string;
+  email: string;
 }
 const comments_Schema = new mongoose.Schema<IComment>({
     content: {
@@ -13,6 +14,8 @@ const comments_Schema = new mongoose.Schema<IComment>({
       type: String, required: true,},
     owner: {
       type: String, required: true,},
+    email:{
+      type: String, required : true}, 
   },
 );
 const Comment= mongoose.model<IComment>("Comments", comments_Schema);

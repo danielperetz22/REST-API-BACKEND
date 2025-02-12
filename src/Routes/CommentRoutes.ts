@@ -185,4 +185,8 @@ router.delete("/:_id", (req: Request, res: Response) => {
   CommentControllers.deleteComment(req, res);
 });
 
+router.post("/", (req: Request, res: Response) => {
+  CommentControllers.create(req, res);
+});
+
 export default router;

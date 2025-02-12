@@ -240,23 +240,35 @@ const logout = async (req: Request, res: Response) => {
     return;
   }
 };
-export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+
+export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   const tokenHeader = req.headers["authorization"];
   const token = tokenHeader && tokenHeader.split(" ")[1];
   if (!token) {
     res.status(400).send("Access denied: Missing token");
     return;
   }
-  if (process.env.ACCESS_TOKEN_SECRET === undefined) {
+  if (!process.env.ACCESS_TOKEN_SECRET) {
     res.status(500).send("Server error: Missing token secret");
     return;
   }
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, payload) => {
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, payload) => {
     if (err) {
       res.status(400).send("Access denied: Invalid token");
-    } else {
-      req.user = { _id: (payload as Payload)._id }; 
+      return;
+    }
+
+    try {
+      const user = await userModel.findById((payload as Payload)._id).select("_id email");
+      if (!user) {
+        res.status(404).send("User not found");
+        return;
+      }
+      req.user = { _id: user._id, email: user.email }; 
       next();
+    } catch (error) {
+      res.status(500).send("Server error");
     }
   });
 };
@@ -459,6 +471,7 @@ const updateUserProfile = async (req: Request, res: Response) => {
     });
   }
 };
+
 
 
 

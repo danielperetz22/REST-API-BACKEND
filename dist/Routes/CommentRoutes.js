@@ -182,4 +182,7 @@ router.put("/:_id", CommentControllers_1.default.updateComment.bind(CommentContr
 router.delete("/:_id", (req, res) => {
     CommentControllers_1.default.deleteComment(req, res);
 });
+router.post("/", (req, res) => {
+    CommentControllers_1.default.create(req, res);
+});
 exports.default = router;
