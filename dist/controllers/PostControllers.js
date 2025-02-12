@@ -63,5 +63,23 @@ class PostController extends baseController_1.BaseController {
             res.status(500).json({ message: "Error fetching posts", error });
         }
     }
+    async deletePost(req, res) {
+        try {
+            const post = await PostModel_1.default.findById(req.params.id);
+            if (!post) {
+                res.status(404).json({ message: "Post not found" });
+                return;
+            }
+            if (post.owner.toString() !== req.user._id.toString()) {
+                res.status(403).json({ message: "You are not authorized to delete this post" });
+                return;
+            }
+            await post.deleteOne();
+            res.status(200).json({ message: "Post deleted successfully" });
+        }
+        catch (error) {
+            res.status(500).json({ message: "Error deleting post", error });
+        }
+    }
 }
 exports.default = new PostController();

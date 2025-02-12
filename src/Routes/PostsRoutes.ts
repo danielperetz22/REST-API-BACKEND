@@ -117,4 +117,6 @@ router.put("/:_id", authMiddleware, (req: Request, res: Response) => {
   PostControllers.updatePost(req, res);
 });
 
+router.delete("/posts/:id", authMiddleware, PostControllers.deletePost);
+
 export default router;
