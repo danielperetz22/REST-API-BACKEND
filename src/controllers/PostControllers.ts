@@ -35,25 +35,26 @@ class PostController extends BaseController<IPost> {
 
   async create(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user?._id;
-      const image = req.file?.path;
-
+      const userId = req.user?._id;        
+      const userEmail = req.user?.email;   
       if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
+         res.status(401).json({ message: "Unauthorized" });
+         return;
       }
-
+  
+      const image = req.file?.path;
       if (!req.body.title || !req.body.content) {
-        res.status(400).json({ message: "Missing required fields" });
-        return;
+       res.status(400).json({ message: "Missing required fields" });
+       return;
       }
-
+      req.body.email = userEmail; 
       req.body.owner = userId;
       req.body.image = image;
       req.body.comments = [];
-
+  
       await super.create(req, res);
     } catch (error) {
+      console.error("Error in create:", error);
       res.status(500).json({ message: "Error creating post", error });
     }
   }

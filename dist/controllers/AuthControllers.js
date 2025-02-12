@@ -172,24 +172,33 @@ const logout = async (req, res) => {
         return;
     }
 };
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
     const tokenHeader = req.headers["authorization"];
     const token = tokenHeader && tokenHeader.split(" ")[1];
     if (!token) {
         res.status(400).send("Access denied: Missing token");
         return;
     }
-    if (process.env.ACCESS_TOKEN_SECRET === undefined) {
+    if (!process.env.ACCESS_TOKEN_SECRET) {
         res.status(500).send("Server error: Missing token secret");
         return;
     }
-    jsonwebtoken_1.default.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, payload) => {
+    jsonwebtoken_1.default.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, payload) => {
         if (err) {
             res.status(400).send("Access denied: Invalid token");
+            return;
         }
-        else {
-            req.user = { _id: payload._id };
+        try {
+            const user = await AuthModel_1.default.findById(payload._id).select("_id email");
+            if (!user) {
+                res.status(404).send("User not found");
+                return;
+            }
+            req.user = { _id: user._id, email: user.email };
             next();
+        }
+        catch (error) {
+            res.status(500).send("Server error");
         }
     });
 };

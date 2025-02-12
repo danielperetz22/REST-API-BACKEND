@@ -29,24 +29,27 @@ class PostController extends baseController_1.BaseController {
         }
     }
     async create(req, res) {
-        var _a, _b;
+        var _a, _b, _c;
         try {
-            const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
-            const image = (_b = req.file) === null || _b === void 0 ? void 0 : _b.path;
+            const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id; // from authMiddleware
+            const userEmail = (_b = req.user) === null || _b === void 0 ? void 0 : _b.email; // from authMiddleware
             if (!userId) {
                 res.status(401).json({ message: "Unauthorized" });
                 return;
             }
+            const image = (_c = req.file) === null || _c === void 0 ? void 0 : _c.path;
             if (!req.body.title || !req.body.content) {
                 res.status(400).json({ message: "Missing required fields" });
                 return;
             }
+            req.body.email = userEmail;
             req.body.owner = userId;
             req.body.image = image;
             req.body.comments = [];
             await super.create(req, res);
         }
         catch (error) {
+            console.error("Error in create:", error);
             res.status(500).json({ message: "Error creating post", error });
         }
     }
