@@ -12,7 +12,7 @@ class CommentController extends BaseController<IComment> {
     console.log("GET ALL COMMENTS ON SPECIFIC POST METHOD");
     console.log(postID);
     try {
-      const findAllComments = await Comment.find({ postId: postID }).select('content owner email');
+      const findAllComments = await Comment.find({ postId: postID }).select('content owner email and username');
       res.status(200).json(findAllComments);
     } catch (error) {
       res.status(500).json({ message: "Error retrieving comments", error });

@@ -260,12 +260,18 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     }
 
     try {
-      const user = await userModel.findById((payload as Payload)._id).select("_id email");
+      const user = await userModel.findById((payload as Payload)._id)
+      .select("_id email username profileImage");
       if (!user) {
         res.status(404).send("User not found");
         return;
       }
-      req.user = { _id: user._id, email: user.email }; 
+      req.user = { 
+        _id: user._id, 
+        email: user.email, 
+        username: user.username, 
+        profileImage: user.profileImage 
+      };
       next();
     } catch (error) {
       res.status(500).send("Server error");

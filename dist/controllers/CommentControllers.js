@@ -14,7 +14,7 @@ class CommentController extends baseController_1.BaseController {
         console.log("GET ALL COMMENTS ON SPECIFIC POST METHOD");
         console.log(postID);
         try {
-            const findAllComments = await CommentModel_1.default.find({ postId: postID }).select('content owner email');
+            const findAllComments = await CommentModel_1.default.find({ postId: postID }).select('content owner email and username');
             res.status(200).json(findAllComments);
         }
         catch (error) {

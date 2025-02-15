@@ -189,12 +189,18 @@ const authMiddleware = async (req, res, next) => {
             return;
         }
         try {
-            const user = await AuthModel_1.default.findById(payload._id).select("_id email");
+            const user = await AuthModel_1.default.findById(payload._id)
+                .select("_id email username profileImage");
             if (!user) {
                 res.status(404).send("User not found");
                 return;
             }
-            req.user = { _id: user._id, email: user.email };
+            req.user = {
+                _id: user._id,
+                email: user.email,
+                username: user.username,
+                profileImage: user.profileImage
+            };
             next();
         }
         catch (error) {
