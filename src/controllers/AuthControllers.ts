@@ -25,13 +25,13 @@ const generateTokens = (_id: string): { refreshToken: string; accessToken: strin
   const accessToken = jwt.sign(
     { _id: _id, rand: rand },
     process.env.ACCESS_TOKEN_SECRET as string,  
-    { expiresIn: process.env.TOKEN_EXPIRATION || '1h' }  // שימוש ישיר במחרוזת
+    { expiresIn: process.env.TOKEN_EXPIRATION || '1h' } 
   );
 
   const refreshToken = jwt.sign(
     { _id: _id, rand: rand },
     process.env.ACCESS_TOKEN_SECRET as string,      
-    { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION || '7d' } // שימוש ישיר במחרוזת
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION || '7d' } 
   );
 
   return { refreshToken, accessToken };
@@ -51,7 +51,7 @@ const register = async (req: Request, res: Response) => {
     res.status(400).json({ message: "Password is required and must be a string" });
     return;
   }
-  if (!username || typeof username !== "string") {  // דרישת שם משתמש
+  if (!username || typeof username !== "string") {  
     res.status(400).json({ message: "Username is required and must be a string" });
     return;
   }
@@ -100,47 +100,58 @@ const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   try {
-    
     if (!email || !password) {
       res.status(400).json({ message: "email and password are required" });
       return;
     }
 
-   
     const user = await userModel.findOne({ email });
 
     if (!user) {
-      res.status(400).json({ message: "Invalid email, or password" });
+      console.log("User not found for email:", email);
+      res.status(400).json({ message: "Invalid email or password" });
       return;
     }
 
-    
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
-      res.status(400).json({ message: "Invalid email, or password" });
+      console.log("Invalid password for email:", email);
+      res.status(400).json({ message: "Invalid email or password" });
       return;
     }
 
-   
     const tokens = generateTokens(user._id as string);
     if (!tokens) {
       res.status(500).json({ message: "Failed to generate tokens" });
       return;
     }
 
-  
     if (!user.refeshtokens) {
       user.refeshtokens = [];
     }
     user.refeshtokens.push(tokens.refreshToken);
     await user.save();
 
-    res.status(200).json({ ...tokens, _id: user._id });
+    console.log("Login Success for User:", {
+      _id: user._id,
+      email: user.email,
+      username: user.username,
+      profileImage: user.profileImage,
+    });
+
+    res.status(200).json({
+      ...tokens,
+      _id: user._id,
+      email: user.email,
+      username: user.username,
+      profileImage: user.profileImage,
+    });
   } catch (err) {
     console.error("Error during login:", err);
     res.status(500).json({ message: "Error during login", error: err });
   }
 };
+
 const validateRefreshToken = (refreshToken: string | undefined) => {
   return new Promise<Document<unknown, {}, IUser> & IUser>((resolve, reject) => {
     if (!refreshToken) {

@@ -15,10 +15,8 @@ const generateTokens = (_id) => {
         return null;
     }
     const rand = Math.random();
-    const accessToken = jsonwebtoken_1.default.sign({ _id: _id, rand: rand }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.TOKEN_EXPIRATION || '1h' } // שימוש ישיר במחרוזת
-    );
-    const refreshToken = jsonwebtoken_1.default.sign({ _id: _id, rand: rand }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION || '7d' } // שימוש ישיר במחרוזת
-    );
+    const accessToken = jsonwebtoken_1.default.sign({ _id: _id, rand: rand }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.TOKEN_EXPIRATION || '1h' });
+    const refreshToken = jsonwebtoken_1.default.sign({ _id: _id, rand: rand }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION || '7d' });
     return { refreshToken, accessToken };
 };
 const register = async (req, res) => {
@@ -33,7 +31,7 @@ const register = async (req, res) => {
         res.status(400).json({ message: "Password is required and must be a string" });
         return;
     }
-    if (!username || typeof username !== "string") { // דרישת שם משתמש
+    if (!username || typeof username !== "string") {
         res.status(400).json({ message: "Username is required and must be a string" });
         return;
     }
@@ -76,12 +74,14 @@ const login = async (req, res) => {
         }
         const user = await AuthModel_1.default.findOne({ email });
         if (!user) {
-            res.status(400).json({ message: "Invalid email, or password" });
+            console.log("User not found for email:", email);
+            res.status(400).json({ message: "Invalid email or password" });
             return;
         }
         const validPassword = await bcrypt_1.default.compare(password, user.password);
         if (!validPassword) {
-            res.status(400).json({ message: "Invalid email, or password" });
+            console.log("Invalid password for email:", email);
+            res.status(400).json({ message: "Invalid email or password" });
             return;
         }
         const tokens = generateTokens(user._id);
@@ -94,7 +94,13 @@ const login = async (req, res) => {
         }
         user.refeshtokens.push(tokens.refreshToken);
         await user.save();
-        res.status(200).json(Object.assign(Object.assign({}, tokens), { _id: user._id }));
+        console.log("Login Success for User:", {
+            _id: user._id,
+            email: user.email,
+            username: user.username,
+            profileImage: user.profileImage,
+        });
+        res.status(200).json(Object.assign(Object.assign({}, tokens), { _id: user._id, email: user.email, username: user.username, profileImage: user.profileImage }));
     }
     catch (err) {
         console.error("Error during login:", err);
