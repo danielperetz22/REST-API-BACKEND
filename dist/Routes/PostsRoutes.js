@@ -117,4 +117,5 @@ router.get("/:_id", (req, res) => {
 router.put("/:_id", AuthControllers_1.authMiddleware, (req, res) => {
     PostControllers_1.default.updatePost(req, res);
 });
+router.delete("/posts/:id", AuthControllers_1.authMiddleware, PostControllers_1.default.deletePost);
 exports.default = router;

@@ -29,23 +29,28 @@ class PostController extends baseController_1.BaseController {
         }
     }
     async create(req, res) {
-        var _a, _b, _c;
+        var _a, _b, _c, _d, _e;
         try {
-            const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id; // from authMiddleware
-            const userEmail = (_b = req.user) === null || _b === void 0 ? void 0 : _b.email; // from authMiddleware
+            const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
+            const userEmail = (_b = req.user) === null || _b === void 0 ? void 0 : _b.email;
+            const userUsername = (_c = req.user) === null || _c === void 0 ? void 0 : _c.username;
+            const userProfileImage = (_d = req.user) === null || _d === void 0 ? void 0 : _d.profileImage;
             if (!userId) {
                 res.status(401).json({ message: "Unauthorized" });
                 return;
             }
-            const image = (_c = req.file) === null || _c === void 0 ? void 0 : _c.path;
+            const image = (_e = req.file) === null || _e === void 0 ? void 0 : _e.path;
             if (!req.body.title || !req.body.content) {
                 res.status(400).json({ message: "Missing required fields" });
                 return;
             }
             req.body.email = userEmail;
+            req.body.username = userUsername;
+            req.body.userProfileImage = userProfileImage;
             req.body.owner = userId;
             req.body.image = image;
             req.body.comments = [];
+            console.log(req.body);
             await super.create(req, res);
         }
         catch (error) {
@@ -64,6 +69,24 @@ class PostController extends baseController_1.BaseController {
         }
         catch (error) {
             res.status(500).json({ message: "Error fetching posts", error });
+        }
+    }
+    async deletePost(req, res) {
+        try {
+            const post = await PostModel_1.default.findById(req.params.id);
+            if (!post) {
+                res.status(404).json({ message: "Post not found" });
+                return;
+            }
+            if (post.owner.toString() !== req.user._id.toString()) {
+                res.status(403).json({ message: "You are not authorized to delete this post" });
+                return;
+            }
+            await post.deleteOne();
+            res.status(200).json({ message: "Post deleted successfully" });
+        }
+        catch (error) {
+            res.status(500).json({ message: "Error deleting post", error });
         }
     }
 }

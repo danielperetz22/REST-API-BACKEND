@@ -2,6 +2,7 @@ import { BaseController } from "./baseController";
 import Post, { IPost } from "../models/PostModel";
 import Comment from "../models/CommentModel";
 import { Request, Response } from "express";
+import { log } from "console";
 
 class PostController extends BaseController<IPost> {
   constructor() {
@@ -37,6 +38,9 @@ class PostController extends BaseController<IPost> {
     try {
       const userId = req.user?._id;        
       const userEmail = req.user?.email;   
+      const userUsername = req.user?.username;
+      const userProfileImage = req.user?.profileImage;
+
       if (!userId) {
          res.status(401).json({ message: "Unauthorized" });
          return;
@@ -48,9 +52,12 @@ class PostController extends BaseController<IPost> {
        return;
       }
       req.body.email = userEmail; 
+      req.body.username = userUsername;
+      req.body.userProfileImage = userProfileImage;
       req.body.owner = userId;
       req.body.image = image;
       req.body.comments = [];
+      console.log(req.body);
   
       await super.create(req, res);
     } catch (error) {
@@ -75,6 +82,26 @@ class PostController extends BaseController<IPost> {
       res.status(500).json({ message: "Error fetching posts", error });
     }
   }
+
+  async deletePost(req: Request, res: Response): Promise<void> {
+    try{
+      const post = await Post.findById(req.params.id);
+
+      if (!post) {
+        res.status(404).json({ message: "Post not found" });
+        return;
+    }
+    if (post.owner.toString() !== req.user._id.toString()) {
+      res.status(403).json({ message: "You are not authorized to delete this post" });
+      return;
+    }
+
+    await post.deleteOne(); 
+    res.status(200).json({ message: "Post deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting post", error });
+  }
+}
 }
 
 export default new PostController();
