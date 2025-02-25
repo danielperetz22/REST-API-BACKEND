@@ -296,7 +296,6 @@ const googleLoginOrRegister = async (req: Request, res: Response) => {
   const { token } = req.body;
 
   try {
-    console.log("Received token:", token);
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
@@ -304,35 +303,31 @@ const googleLoginOrRegister = async (req: Request, res: Response) => {
 
     const payload = ticket.getPayload();
     if (!payload) {
-      console.log("Invalid Google token");
       res.status(400).json({ message: "Invalid Google token." });
       return;
     }
-    console.log("Google payload:", payload);
 
     const { email, name, picture } = payload;
-
-    if (!email) {
-      console.log("Email is missing in Google payload");
-      res.status(400).json({ message: "Google account email is required." });
-      return;
-    }
+    console.log("Google Profile Image URL from Google:", picture); // 🛑 Debugging
 
     let user = await userModel.findOne({ email });
 
     if (!user) {
-      console.log("Creating new user for email:", email);
       user = await userModel.create({
         email,
         username: name || email,
         password: "",
-        profileImage: picture || "",
+        profileImage: picture, // ✅ Save Google URL as-is
       });
+    } else {
+      if (user.profileImage !== picture) {
+        user.profileImage = picture;
+        await user.save();
+      }
     }
 
     const tokens = generateTokens(user._id as string);
     if (!tokens) {
-      console.log("Failed to generate tokens");
       res.status(500).json({ message: "Failed to generate tokens." });
       return;
     }
@@ -343,6 +338,8 @@ const googleLoginOrRegister = async (req: Request, res: Response) => {
     user.refeshtokens.push(tokens.refreshToken);
     await user.save();
 
+    console.log("Stored Profile Image in DB:", user.profileImage);
+    console.log("Returning Google Profile Image from Backend:", user.profileImage); // 🛑 Debugging
 
     res.status(200).json({
       ...tokens,
@@ -358,6 +355,7 @@ const googleLoginOrRegister = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error logging in/registering with Google.", error });
   }
 };
+
 
 const getUserProfile = async (req: Request, res: Response) => {
   try {

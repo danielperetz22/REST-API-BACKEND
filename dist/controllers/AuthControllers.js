@@ -218,37 +218,34 @@ exports.authMiddleware = authMiddleware;
 const googleLoginOrRegister = async (req, res) => {
     const { token } = req.body;
     try {
-        console.log("Received token:", token);
         const ticket = await client.verifyIdToken({
             idToken: token,
             audience: process.env.GOOGLE_CLIENT_ID,
         });
         const payload = ticket.getPayload();
         if (!payload) {
-            console.log("Invalid Google token");
             res.status(400).json({ message: "Invalid Google token." });
             return;
         }
-        console.log("Google payload:", payload);
         const { email, name, picture } = payload;
-        if (!email) {
-            console.log("Email is missing in Google payload");
-            res.status(400).json({ message: "Google account email is required." });
-            return;
-        }
+        console.log("Google Profile Image URL from Google:", picture); // 🛑 Debugging
         let user = await AuthModel_1.default.findOne({ email });
         if (!user) {
-            console.log("Creating new user for email:", email);
             user = await AuthModel_1.default.create({
                 email,
                 username: name || email,
                 password: "",
-                profileImage: picture || "",
+                profileImage: picture, // ✅ Save Google URL as-is
             });
+        }
+        else {
+            if (user.profileImage !== picture) {
+                user.profileImage = picture;
+                await user.save();
+            }
         }
         const tokens = generateTokens(user._id);
         if (!tokens) {
-            console.log("Failed to generate tokens");
             res.status(500).json({ message: "Failed to generate tokens." });
             return;
         }
@@ -257,6 +254,8 @@ const googleLoginOrRegister = async (req, res) => {
         }
         user.refeshtokens.push(tokens.refreshToken);
         await user.save();
+        console.log("Stored Profile Image in DB:", user.profileImage);
+        console.log("Returning Google Profile Image from Backend:", user.profileImage); // 🛑 Debugging
         res.status(200).json(Object.assign(Object.assign({}, tokens), { user: {
                 _id: user._id,
                 email: user.email,
