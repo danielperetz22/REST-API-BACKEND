@@ -18,17 +18,25 @@ if (!fs.existsSync(uploadsDir)) {
 
 dotenv.config();
 const app = express();
-app.use(cors({
-  origin: "http://localhost:5173",
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true,
-}));
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173"); 
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+  next();
+});
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/post', postRoutes);
 app.use('/comment', CommentRoutes);
 app.use('/auth', AuthRoutes);
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(uploadsDir, {
+  setHeaders: (res, path, stat) => {
+    res.setHeader("Cross-Origin-Resource-Policy", "same-site");
+  }
+}));
 
 
 const options = {

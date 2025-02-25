@@ -100,8 +100,10 @@ const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   try {
+    console.log("Login request received with email:", email);
+
     if (!email || !password) {
-      res.status(400).json({ message: "email and password are required" });
+      res.status(400).json({ message: "Email and password are required" });
       return;
     }
 
@@ -122,6 +124,7 @@ const login = async (req: Request, res: Response) => {
 
     const tokens = generateTokens(user._id as string);
     if (!tokens) {
+      console.log("Failed to generate tokens for user:", user._id);
       res.status(500).json({ message: "Failed to generate tokens" });
       return;
     }
@@ -132,9 +135,9 @@ const login = async (req: Request, res: Response) => {
     user.refeshtokens.push(tokens.refreshToken);
     await user.save();
 
-    console.log("Login Success for User:", {
+    console.log("Login success for user:", {
       _id: user._id,
-      email: user.email,
+      email: user.email, 
       username: user.username,
       profileImage: user.profileImage,
     });
@@ -142,9 +145,9 @@ const login = async (req: Request, res: Response) => {
     res.status(200).json({
       ...tokens,
       _id: user._id,
-      email: user.email,
-      username: user.username,
-      profileImage: user.profileImage,
+      email: user.email, 
+      username: user.username || "Unknown", 
+      profileImage: user.profileImage || "https://example.com/default-avatar.jpg", 
     });
   } catch (err) {
     console.error("Error during login:", err);
@@ -172,8 +175,6 @@ const validateRefreshToken = (refreshToken: string | undefined) => {
         return;
       }
 
-      
-
       const userId = (payload as Payload)._id;
       if (!userId) {
       
@@ -181,7 +182,6 @@ const validateRefreshToken = (refreshToken: string | undefined) => {
         return;
       }
      
-
       try {
         const user = await userModel.findById(userId);
         if (!user) {
@@ -190,15 +190,12 @@ const validateRefreshToken = (refreshToken: string | undefined) => {
           return;
         }
 
-     
-
         if (!user.refeshtokens || !user.refeshtokens.includes(refreshToken)) {
         
           reject("error");
           return;
         }
-
-        
+     
         resolve(user);
       } catch (err) {
        

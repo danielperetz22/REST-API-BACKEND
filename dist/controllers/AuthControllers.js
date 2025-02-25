@@ -68,8 +68,9 @@ const register = async (req, res) => {
 const login = async (req, res) => {
     const { email, password } = req.body;
     try {
+        console.log("Login request received with email:", email);
         if (!email || !password) {
-            res.status(400).json({ message: "email and password are required" });
+            res.status(400).json({ message: "Email and password are required" });
             return;
         }
         const user = await AuthModel_1.default.findOne({ email });
@@ -86,6 +87,7 @@ const login = async (req, res) => {
         }
         const tokens = generateTokens(user._id);
         if (!tokens) {
+            console.log("Failed to generate tokens for user:", user._id);
             res.status(500).json({ message: "Failed to generate tokens" });
             return;
         }
@@ -94,13 +96,13 @@ const login = async (req, res) => {
         }
         user.refeshtokens.push(tokens.refreshToken);
         await user.save();
-        console.log("Login Success for User:", {
+        console.log("Login success for user:", {
             _id: user._id,
             email: user.email,
             username: user.username,
             profileImage: user.profileImage,
         });
-        res.status(200).json(Object.assign(Object.assign({}, tokens), { _id: user._id, email: user.email, username: user.username, profileImage: user.profileImage }));
+        res.status(200).json(Object.assign(Object.assign({}, tokens), { _id: user._id, email: user.email, username: user.username || "Unknown", profileImage: user.profileImage || "https://example.com/default-avatar.jpg" }));
     }
     catch (err) {
         console.error("Error during login:", err);

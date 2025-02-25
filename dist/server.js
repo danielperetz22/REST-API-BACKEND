@@ -12,7 +12,6 @@ const AuthRoutes_1 = __importDefault(require("./Routes/AuthRoutes"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const swagger_jsdoc_1 = __importDefault(require("swagger-jsdoc"));
 const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
-const cors_1 = __importDefault(require("cors"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const uploadsDir = path_1.default.join(__dirname, "uploads");
@@ -21,17 +20,25 @@ if (!fs_1.default.existsSync(uploadsDir)) {
 }
 dotenv_1.default.config();
 const app = (0, express_1.default)();
-app.use((0, cors_1.default)({
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-}));
+app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+    next();
+});
 app.use(body_parser_1.default.json());
 app.use(body_parser_1.default.urlencoded({ extended: true }));
 app.use('/post', PostsRoutes_1.default);
 app.use('/comment', CommentRoutes_1.default);
 app.use('/auth', AuthRoutes_1.default);
-app.use("/uploads", express_1.default.static("uploads"));
+app.use("/uploads", express_1.default.static(uploadsDir, {
+    setHeaders: (res, path, stat) => {
+        res.setHeader("Cross-Origin-Resource-Policy", "same-site");
+    }
+}));
 const options = {
     definition: {
         openapi: "3.0.0",
