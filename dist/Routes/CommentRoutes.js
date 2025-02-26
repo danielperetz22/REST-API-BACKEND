@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const CommentControllers_1 = __importDefault(require("../controllers/CommentControllers"));
+const AuthControllers_1 = require("../controllers/AuthControllers");
 const router = express_1.default.Router();
 /**
  * @swagger
@@ -121,7 +122,7 @@ router.get("/:_id", (req, res) => {
  *       400:
  *         description: Missing or invalid data
  */
-router.post("/", (req, res) => {
+router.post("/", AuthControllers_1.authMiddleware, (req, res) => {
     CommentControllers_1.default.create(req, res);
 });
 /**
