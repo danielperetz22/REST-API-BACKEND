@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import CommentControllers from '../controllers/CommentControllers';
+import { authMiddleware } from '../controllers/AuthControllers';
 
 const router = express.Router();
 
@@ -121,7 +122,7 @@ router.get("/:_id", (req: Request, res: Response) => {
  *       400:
  *         description: Missing or invalid data
  */
-router.post("/", (req: Request, res: Response) => {
+router.post("/", authMiddleware, (req: Request, res: Response) => {
   CommentControllers.create(req, res);
 });
 
