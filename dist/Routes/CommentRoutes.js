@@ -22,7 +22,6 @@ const router = express_1.default.Router();
  *       required:
  *         - content
  *         - postId
- *         - owner
  *       properties:
  *         content:
  *           type: string
@@ -32,11 +31,19 @@ const router = express_1.default.Router();
  *           description: The ID of the post the comment belongs to
  *         owner:
  *           type: string
- *           description: The owner of the comment
+ *           description: The user ID of the owner who created the comment
+ *         email:
+ *           type: string
+ *           description: The email of the owner
+ *         username:
+ *           type: string
+ *           description: The username of the owner
  *       example:
  *         content: "This is a comment"
  *         postId: "60d21b4667d0d8992e610c85"
  *         owner: "60d21b5267d0d8992e610c88"
+ *         email: "owner@example.com"
+ *         username: "OwnerUserName"
  */
 /**
  * @swagger
@@ -45,6 +52,9 @@ const router = express_1.default.Router();
  *     tags:
  *       - Comments
  *     summary: Get all comments or comments by post ID
+ *     description: |
+ *       If `postId` query param is provided, returns comments for that post.
+ *       Otherwise, returns all comments in the system.
  *     parameters:
  *       - in: query
  *         name: postId
@@ -66,9 +76,11 @@ const router = express_1.default.Router();
 router.get("/", (req, res) => {
     const postId = req.query.postId;
     if (!postId) {
+        // Get all comments
         CommentControllers_1.default.getAll(req, res);
     }
     else {
+        // Get all comments by post ID
         CommentControllers_1.default.gatAllCommentsByPostId(req, res);
     }
 });
@@ -106,6 +118,9 @@ router.get("/:_id", (req, res) => {
  *     tags:
  *       - Comments
  *     summary: Create a new comment
+ *     description: Create a new comment on a specific post. Requires authentication.
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -118,7 +133,13 @@ router.get("/:_id", (req, res) => {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Comment'
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 newComment:
+ *                   $ref: '#/components/schemas/Comment'
+ *       401:
+ *         description: Unauthorized (token missing or invalid)
  *       400:
  *         description: Missing or invalid data
  */
@@ -132,6 +153,9 @@ router.post("/", AuthControllers_1.authMiddleware, (req, res) => {
  *     tags:
  *       - Comments
  *     summary: Update a comment by its ID
+ *     description: Update an existing comment. Only the owner can update. Requires authentication.
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -146,7 +170,7 @@ router.post("/", AuthControllers_1.authMiddleware, (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               content:
+ *               comment:
  *                 type: string
  *                 description: Updated content of the comment
  *     responses:
@@ -155,11 +179,17 @@ router.post("/", AuthControllers_1.authMiddleware, (req, res) => {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Comment'
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 comment:
+ *                   $ref: '#/components/schemas/Comment'
+ *       403:
+ *         description: Unauthorized (not the owner)
  *       404:
  *         description: Comment not found or could not be updated
  */
-router.put("/:_id", CommentControllers_1.default.updateComment.bind(CommentControllers_1.default));
+router.put("/:_id", AuthControllers_1.authMiddleware, CommentControllers_1.default.updateComment.bind(CommentControllers_1.default));
 /**
  * @swagger
  * /comment/{id}:
@@ -167,6 +197,9 @@ router.put("/:_id", CommentControllers_1.default.updateComment.bind(CommentContr
  *     tags:
  *       - Comments
  *     summary: Delete a comment by its ID
+ *     description: Delete an existing comment. Only the owner can delete. Requires authentication.
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -177,13 +210,18 @@ router.put("/:_id", CommentControllers_1.default.updateComment.bind(CommentContr
  *     responses:
  *       200:
  *         description: Comment deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       403:
+ *         description: Unauthorized (not the owner)
  *       404:
  *         description: Comment not found or could not be deleted
  */
-router.delete("/:_id", (req, res) => {
+router.delete("/:_id", AuthControllers_1.authMiddleware, (req, res) => {
     CommentControllers_1.default.deleteComment(req, res);
-});
-router.post("/", (req, res) => {
-    CommentControllers_1.default.create(req, res);
 });
 exports.default = router;
