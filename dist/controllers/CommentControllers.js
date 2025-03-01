@@ -12,10 +12,8 @@ class CommentController extends baseController_1.BaseController {
     }
     async gatAllCommentsByPostId(req, res) {
         const postID = req.query.postId;
-        console.log("GET ALL COMMENTS ON SPECIFIC POST METHOD");
-        console.log(postID);
         try {
-            const findAllComments = await CommentModel_1.default.find({ postId: postID }).select('content owner email and username');
+            const findAllComments = await CommentModel_1.default.find({ postId: postID }).select("content owner email username");
             res.status(200).json(findAllComments);
         }
         catch (error) {
@@ -53,42 +51,54 @@ class CommentController extends baseController_1.BaseController {
         }
     }
     async updateComment(req, res) {
+        var _a;
         const commentID = req.params._id;
         const newContent = req.body.comment;
         try {
-            const commentToUpdate = await CommentModel_1.default.findByIdAndUpdate(commentID, { content: newContent }, { new: true });
-            if (!commentToUpdate) {
-                res.status(404).send("COULD NOT UPDATE COMMENT DUE TO AN ERROR!");
+            const comment = await CommentModel_1.default.findById(commentID);
+            if (!comment) {
+                res.status(404).json({ message: "Comment not found" });
                 return;
             }
-            else {
-                res.status(200).send(commentToUpdate);
+            console.log("Comment Owner:", comment.owner.toString());
+            console.log("Request User ID:", (_a = req.user) === null || _a === void 0 ? void 0 : _a._id.toString());
+            if (!req.user || !req.user._id) {
+                res.status(401).json({ message: "User not authenticated" });
                 return;
             }
+            if (comment.owner.toString() !== req.user._id.toString()) {
+                res.status(403).json({ message: "Unauthorized to edit this comment" });
+                return;
+            }
+            comment.content = newContent;
+            await comment.save();
+            res.status(200).json({ message: "Comment updated successfully", comment });
         }
         catch (error) {
-            res.status(400).send(error);
-            return;
+            res.status(500).json({ message: "Error updating comment", error });
         }
     }
     async deleteComment(req, res) {
         const commentID = req.params._id;
         try {
-            const theComment = await CommentModel_1.default.findByIdAndDelete({
-                _id: commentID,
-            });
-            if (!theComment) {
-                res.status(404).send("Could not delete comment due to an error");
+            const comment = await CommentModel_1.default.findById(commentID);
+            if (!comment) {
+                res.status(404).json({ message: "Comment not found" });
                 return;
             }
-            else {
-                res.status(200).send(theComment);
+            if (!req.user || !req.user._id) {
+                res.status(401).json({ message: "User not authenticated" });
                 return;
             }
+            if (comment.owner.toString() !== req.user._id.toString()) {
+                res.status(403).json({ message: "Unauthorized to delete this comment" });
+                return;
+            }
+            await CommentModel_1.default.findByIdAndDelete(commentID);
+            res.status(200).json({ message: "Comment deleted successfully" });
         }
         catch (error) {
-            res.status(400).send(error);
-            return;
+            res.status(500).json({ message: "Error deleting comment", error });
         }
     }
 }
