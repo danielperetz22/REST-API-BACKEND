@@ -9,6 +9,7 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const PostsRoutes_1 = __importDefault(require("./Routes/PostsRoutes"));
 const CommentRoutes_1 = __importDefault(require("./Routes/CommentRoutes"));
 const AuthRoutes_1 = __importDefault(require("./Routes/AuthRoutes"));
+const geminiRoutes_1 = __importDefault(require("./Routes/geminiRoutes"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const swagger_jsdoc_1 = __importDefault(require("swagger-jsdoc"));
 const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
@@ -32,6 +33,7 @@ app.use('/post', PostsRoutes_1.default);
 app.use('/comment', CommentRoutes_1.default);
 app.use('/auth', AuthRoutes_1.default);
 app.use("/uploads", express_1.default.static("uploads"));
+app.use("/api/gemini", geminiRoutes_1.default);
 const options = {
     definition: {
         openapi: "3.0.0",
