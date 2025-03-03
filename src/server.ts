@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import postRoutes from './Routes/PostsRoutes';
 import CommentRoutes from './Routes/CommentRoutes';
 import AuthRoutes from './Routes/AuthRoutes';
+import geminiRoutes from "./Routes/geminiRoutes";
 import bodyParser from "body-parser";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
@@ -30,6 +31,7 @@ app.use('/post', postRoutes);
 app.use('/comment', CommentRoutes);
 app.use('/auth', AuthRoutes);
 app.use("/uploads", express.static("uploads"));
+app.use("/api/gemini", geminiRoutes);
 
 
 const options = {
