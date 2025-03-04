@@ -56,9 +56,19 @@ import { upload } from "../middlewares/uploadMiddleware";
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/User'
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               profileImage:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       201:
  *         description: User registered successfully
@@ -70,6 +80,7 @@ import { upload } from "../middlewares/uploadMiddleware";
  *         description: Missing required fields or invalid data
  */
 router.post("/register", upload.single("profileImage"), AuthControllers.register);
+
 /**
  * @swagger
  * /auth/login:
@@ -84,16 +95,16 @@ router.post("/register", upload.single("profileImage"), AuthControllers.register
  *           schema:
  *             type: object
  *             required:
- *               - username
+ *               - email
  *               - password
  *             properties:
- *               username:
+ *               email:
  *                 type: string
  *               password:
  *                 type: string
  *             example:
- *               username: daniel
- *               password: "123"
+ *               email: daniel@gmail.com
+ *               password: "123456"
  *     responses:
  *       200:
  *         description: User logged in successfully
@@ -109,7 +120,6 @@ router.post("/register", upload.single("profileImage"), AuthControllers.register
  *       400:
  *         description: Invalid username or password
  */
-
 router.post('/login', AuthControllers.login);
 
 /**
@@ -171,11 +181,67 @@ router.post('/logout', AuthControllers.logout);
  */
 router.post('/refresh', AuthControllers.refresh);
 
+/**
+ * @swagger
+ * /auth/google:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Google login or register
+ *     responses:
+ *       200:
+ *         description: User logged in or registered via Google
+ *       400:
+ *         description: Error during Google authentication
+ */
+router.post("/google", AuthControllers.googleLoginOrRegister);
 
-router.post("/google",AuthControllers.googleLoginOrRegister);
+/**
+ * @swagger
+ * /auth/profile:
+ *   get:
+ *     tags:
+ *       - Auth
+ *     summary: Get user profile
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *   put:
+ *     tags:
+ *       - Auth
+ *     summary: Update user profile
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               profileImage:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: User profile updated successfully
+ *       400:
+ *         description: Invalid data provided
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ */
 router.get("/profile", authMiddleware, AuthControllers.getUserProfile);
-router.put("/profile", authMiddleware,upload.single('profileImage'), AuthControllers.updateUserProfile);
-
+router.put("/profile", authMiddleware, upload.single('profileImage'), AuthControllers.updateUserProfile);
 
 /**
  * @swagger
@@ -189,8 +255,8 @@ router.put("/profile", authMiddleware,upload.single('profileImage'), AuthControl
  *     responses:
  *       200:
  *         description: User is authenticated
- *       400:
- *         description: Missing or invalid token
+ *       401:
+ *         description: Unauthorized - Missing or invalid token
  */
 router.get('/testAuth', authMiddleware, (req, res) => {
   res.status(200).json({ message: 'You are authenticated' });

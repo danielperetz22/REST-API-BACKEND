@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import Comment,{IComment} from '../models/CommentModel';
 import { BaseController } from './baseController';
 import userModel from '../models/AuthModel';
+import mongoose from 'mongoose';
 
 class CommentController extends BaseController<IComment> {
   constructor() {
@@ -111,6 +112,27 @@ class CommentController extends BaseController<IComment> {
       res.status(500).json({ message: "Error deleting comment", error });
     }
   }
+  async getCommentById(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+  
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({ message: "Invalid comment ID format" });
+        return;
+      }
+  
+      const comment = await Comment.findById(id);
+      if (!comment) {
+        res.status(404).json({ message: "Comment not found" });
+        return;
+      }
+  
+      res.status(200).json(comment);
+    } catch (error) {
+      res.status(500).json({ message: "Error retrieving comment", error });
+    }
+  }
+  
 }
 
 export default new CommentController();

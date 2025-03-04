@@ -90,9 +90,19 @@ const uploadMiddleware_1 = require("../middlewares/uploadMiddleware");
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/User'
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               profileImage:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       201:
  *         description: User registered successfully
@@ -118,16 +128,16 @@ router.post("/register", uploadMiddleware_1.upload.single("profileImage"), AuthC
  *           schema:
  *             type: object
  *             required:
- *               - username
+ *               - email
  *               - password
  *             properties:
- *               username:
+ *               email:
  *                 type: string
  *               password:
  *                 type: string
  *             example:
- *               username: daniel
- *               password: "123"
+ *               email: daniel@gmail.com
+ *               password: "123456"
  *     responses:
  *       200:
  *         description: User logged in successfully
@@ -201,7 +211,64 @@ router.post('/logout', AuthControllers_1.default.logout);
  *         description: Invalid or expired refresh token
  */
 router.post('/refresh', AuthControllers_1.default.refresh);
+/**
+ * @swagger
+ * /auth/google:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Google login or register
+ *     responses:
+ *       200:
+ *         description: User logged in or registered via Google
+ *       400:
+ *         description: Error during Google authentication
+ */
 router.post("/google", AuthControllers_1.default.googleLoginOrRegister);
+/**
+ * @swagger
+ * /auth/profile:
+ *   get:
+ *     tags:
+ *       - Auth
+ *     summary: Get user profile
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *   put:
+ *     tags:
+ *       - Auth
+ *     summary: Update user profile
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               profileImage:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: User profile updated successfully
+ *       400:
+ *         description: Invalid data provided
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ */
 router.get("/profile", AuthControllers_1.authMiddleware, AuthControllers_1.default.getUserProfile);
 router.put("/profile", AuthControllers_1.authMiddleware, uploadMiddleware_1.upload.single('profileImage'), AuthControllers_1.default.updateUserProfile);
 /**
@@ -216,8 +283,8 @@ router.put("/profile", AuthControllers_1.authMiddleware, uploadMiddleware_1.uplo
  *     responses:
  *       200:
  *         description: User is authenticated
- *       400:
- *         description: Missing or invalid token
+ *       401:
+ *         description: Unauthorized - Missing or invalid token
  */
 router.get('/testAuth', AuthControllers_1.authMiddleware, (req, res) => {
     res.status(200).json({ message: 'You are authenticated' });

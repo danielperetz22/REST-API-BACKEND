@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const CommentModel_1 = __importDefault(require("../models/CommentModel"));
 const baseController_1 = require("./baseController");
 const AuthModel_1 = __importDefault(require("../models/AuthModel"));
+const mongoose_1 = __importDefault(require("mongoose"));
 class CommentController extends baseController_1.BaseController {
     constructor() {
         super(CommentModel_1.default);
@@ -99,6 +100,24 @@ class CommentController extends baseController_1.BaseController {
         }
         catch (error) {
             res.status(500).json({ message: "Error deleting comment", error });
+        }
+    }
+    async getCommentById(req, res) {
+        try {
+            const { id } = req.params;
+            if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
+                res.status(400).json({ message: "Invalid comment ID format" });
+                return;
+            }
+            const comment = await CommentModel_1.default.findById(id);
+            if (!comment) {
+                res.status(404).json({ message: "Comment not found" });
+                return;
+            }
+            res.status(200).json(comment);
+        }
+        catch (error) {
+            res.status(500).json({ message: "Error retrieving comment", error });
         }
     }
 }
