@@ -4,10 +4,53 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const router = express_1.default.Router();
 const PostControllers_1 = __importDefault(require("../controllers/PostControllers"));
 const AuthControllers_1 = require("../controllers/AuthControllers");
 const uploadMiddleware_1 = require("../middlewares/uploadMiddleware");
+const router = express_1.default.Router();
+/**
+ * @swagger
+ * tags:
+ *   name: Posts
+ *   description: Endpoints for managing posts
+ */
+/**
+ * @swagger
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ *   schemas:
+ *     Post:
+ *       type: object
+ *       required:
+ *         - title
+ *         - content
+ *       properties:
+ *         _id:
+ *           type: string
+ *           description: Unique identifier for the post
+ *         title:
+ *           type: string
+ *           description: The title of the post
+ *         content:
+ *           type: string
+ *           description: The content of the post
+ *         owner:
+ *           type: string
+ *           description: ID of the user who created the post
+ *         image:
+ *           type: string
+ *           description: Image URL associated with the post
+ *       example:
+ *         _id: "60d21b4667d0d8992e610c85"
+ *         title: "Sample Post"
+ *         content: "This is a sample post content."
+ *         owner: "60d21b5267d0d8992e610c88"
+ *         image: "https://example.com/sample.jpg"
+ */
 /**
  * @swagger
  * /post:
@@ -34,9 +77,13 @@ const uploadMiddleware_1 = require("../middlewares/uploadMiddleware");
  *     responses:
  *       201:
  *         description: Post created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Post'
  *       400:
  *         description: Missing or invalid data
- *       403:
+ *       401:
  *         description: Unauthorized
  */
 router.post("/", AuthControllers_1.authMiddleware, uploadMiddleware_1.upload.single("image"), (req, res) => {
@@ -52,6 +99,12 @@ router.post("/", AuthControllers_1.authMiddleware, uploadMiddleware_1.upload.sin
  *     responses:
  *       200:
  *         description: List of posts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Post'
  *       404:
  *         description: No posts found
  */
@@ -74,11 +127,17 @@ router.get("/all", (req, res) => {
  *     responses:
  *       200:
  *         description: Post found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Post'
+ *       400:
+ *         description: Invalid ID format
  *       404:
  *         description: Post not found
  */
-router.get("/:_id", (req, res) => {
-    PostControllers_1.default.getById(req, res);
+router.get("/:id", (req, res) => {
+    PostControllers_1.default.getPostById(req, res);
 });
 /**
  * @swagger
@@ -86,7 +145,7 @@ router.get("/:_id", (req, res) => {
  *   put:
  *     tags:
  *       - Posts
- *     summary: Update a post by its ID
+ *     summary: Update a post by ID
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -109,13 +168,44 @@ router.get("/:_id", (req, res) => {
  *     responses:
  *       200:
  *         description: Post updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Post'
  *       400:
- *         description: Missing or invalid data
+ *         description: Invalid request
+ *       403:
+ *         description: Unauthorized (not the owner)
  *       404:
  *         description: Post not found
  */
-router.put("/:_id", AuthControllers_1.authMiddleware, (req, res) => {
+router.put("/:id", AuthControllers_1.authMiddleware, (req, res) => {
     PostControllers_1.default.updatePost(req, res);
 });
-router.delete("/posts/:id", AuthControllers_1.authMiddleware, PostControllers_1.default.deletePost);
+/**
+ * @swagger
+ * /post/{id}:
+ *   delete:
+ *     tags:
+ *       - Posts
+ *     summary: Delete a post by ID
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Post deleted successfully
+ *       403:
+ *         description: Unauthorized (not the owner)
+ *       404:
+ *         description: Post not found
+ */
+router.delete("/:id", AuthControllers_1.authMiddleware, (req, res) => {
+    PostControllers_1.default.deletePost(req, res);
+});
 exports.default = router;

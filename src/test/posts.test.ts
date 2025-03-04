@@ -1,145 +1,152 @@
-  import request from "supertest";
-  import initApp from "../server";
-  import mongoose from "mongoose";
-  import postModel from "../models/PostModel";
-  import AuthModel from "../models/AuthModel";
-  import { Express} from "express";
+import request from "supertest";
+import initApp from "../server";
+import mongoose from "mongoose";
+import PostModel from "../models/PostModel";
+import AuthModel from "../models/AuthModel";
+import { Express } from "express";
 
-  let app :Express;
-  let postId = '';
+let app: Express;
+let postId = "";
 
-  type UserInfo = {
-    email: string;
-    username: string;
-    password: string;
-    _id?: string;
-    accessToken?: string;
-    refreshToken?: string;
-  };
+type UserInfo = {
+  email: string;
+  username: string;
+  password: string;
+  _id?: string;
+  accessToken?: string;
+  refreshToken?: string;
+};
 
-  const userInfo: UserInfo = {
-    email:"hila@gmail.com", 
-    username:"hila",
-    password:"123456"
-  };
+const userInfo: UserInfo = {
+  email: "hila@gmail.com",
+  username: "hila",
+  password: "123456",
+};
 
-  beforeAll(async () => {
-      app = await initApp();
-      await postModel.deleteMany();
-      // await AuthModel.deleteMany();
-      await request(app).post("/auth/register").send(userInfo);
-      const response = await request(app).post("/auth/login").send(userInfo);
-      userInfo._id=response.body._id  || response.body._Id;
-      userInfo.accessToken=response.body.accessToken;
-      userInfo.refreshToken=response.body.refreshToken;
+beforeAll(async () => {
+  app = await initApp();
+  await PostModel.deleteMany();
+  await AuthModel.deleteMany();
+  await request(app).post("/auth/register").send(userInfo);
+  const response = await request(app).post("/auth/login").send(userInfo);
+  userInfo._id = response.body._id || response.body._Id;
+  userInfo.accessToken = response.body.accessToken;
+  userInfo.refreshToken = response.body.refreshToken;
+});
+
+afterAll(async () => {
+  if (postId) {
+  await PostModel.findByIdAndDelete(postId);
+  }
+  await mongoose.connection.close();
+});
+
+describe("🚀 Posts API Test Suite", () => {
+  test("GET /post/all - should be empty at start", async () => {
+    const response = await request(app).get("/post/all");
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(0);
   });
 
-  afterAll(async () => {
-   await mongoose.connection.close();
-    });
-
-
-  describe("Posts test suite", () => {
-    test("Test get all post - empty", async () => {
-      const response = await request(app).get("/post/all");
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveLength(0);
-    })
-
-    test("Test create post", async () => {
-      const response = await request(app).post("/post").set({
-          Authorization: "jwt " + userInfo.accessToken,})
-        .send({
-          title: "title",
-          content: "content",
-        });
-    
-      postId = response.body._id;
-      expect(response.status).toBe(201);
-      expect(response.body.title).toBe("title");
-      expect(response.body.content).toBe("content");
-      expect(response.body.owner).toBe(userInfo._id);
-    });
-
-    test("Test fail to create post", async () => {
-      const response = await request(app).post("/post").set({
-        Authorization: "jwt " + userInfo.accessToken,
-      })
+  test("POST /post - creates a new post", async () => {
+    const response = await request(app)
+      .post("/post")
+      .set("Authorization", "Bearer " + userInfo.accessToken)
       .send({
-        title: "title",
+        title: "Test Post",
+        content: "This is a test post content",
       });
-      expect(response.status).toBe(400);
-    });
 
+    console.log("✅ Created Post Response:", response.body);
 
-    test("Test get all post after adding post", async () => {
-      const response = await request(app).get("/post/all");
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveLength(1);
-    });
+    postId = response.body._id;
+    expect(response.status).toBe(201);
+    expect(postId).toBeDefined();
+    expect(response.body.owner).toBe(userInfo._id);
+  });
 
-    test("Test get post by id", async () => {
-      const response = await request(app).get(`/post/` + postId);
-      expect(response.status).toBe(200);
-      expect(response.body.title).toBe("title");
-      expect(response.body.content).toBe("content");
-      expect(response.body.owner).toBe(userInfo._id);
-    });
-
-    test("Test fail to get post by id", async () => {
-      const response = await request(app).get(`/post/` + postId +5);
-      expect(response.status).toBe(400);
-    });
-    
-    test("Test get post by owner", async () => {
-      const response = await request(app).get(`/post/all?owner=${userInfo._id}`);
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveLength(1);
-    });
-
-    test("Test fail to get post by owner", async () => {
-      const response = await request(app).get(`/post/all?owner=123456`);
-      expect(response.status).toBe(404);
-    });
-
-    test("Test update post", async () => {
-      const response = await request(app).put(`/post/` + postId).set({
-        Authorization: "jwt " + userInfo.accessToken,
-      })
+  test("POST /post - fails to create a post (missing content)", async () => {
+    const response = await request(app)
+      .post("/post")
+      .set("Authorization", "Bearer " + userInfo.accessToken)
       .send({
-        title: "updated title",
-        content: "updated content",
+        title: "Missing Content",
       });
-      expect(response.status).toBe(200);
-      expect(response.body.title).toBe("updated title");
-      expect(response.body.content).toBe("updated content");
-    })
-    test("Test update post with non-existing ID'", async () => {
-      const fakeId = new mongoose.Types.ObjectId().toString();
-    
-      const response = await request(app)
-        .put(`/post/${fakeId}`)
-        .set("Authorization", "jwt " + userInfo.accessToken)
-        .send({
-          title: "Doesn't matter",
-          content: "Because post is not found",
-        });
-    
-      expect(response.status).toBe(404);
-      expect(response.text).toBe("could not find post");
-    });
 
-    test("Test fail to update post", async () => {
-      const response = await request(app).put(`/post/` + postId).set({
-        Authorization: "jwt " + userInfo.accessToken,
-      })
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Missing required fields: title and content");
+  });
+
+  test("GET /post/all - returns 1 post after creation", async () => {
+    const response = await request(app).get("/post/all");
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(1);
+  });
+
+  test("GET /post/:id - retrieves a post by ID", async () => {
+    const response = await request(app).get(`/post/${postId}`);
+    expect(response.status).toBe(200);
+    expect(response.body._id).toBe(postId);
+    expect(response.body.title).toBe("Test Post");
+    expect(response.body.owner).toBe(userInfo._id);
+  });
+
+  test("GET /post/:id - fails on invalid ID", async () => {
+    const fakeId = new mongoose.Types.ObjectId().toString();
+    const response = await request(app).get(`/post/${fakeId}`);
+    expect(response.status).toBe(404);
+    expect(response.body.message).toBe("Post not found");
+  });
+
+  test("GET /post/all?owner=:owner - retrieves posts by owner ID", async () => {
+    const response = await request(app).get(`/post/all?owner=${userInfo._id}`);
+    expect(response.status).toBe(200);
+    expect(response.body.length).toBe(1);
+  });
+
+  test("PUT /post/:id - fails when post does not exist", async () => {
+    const fakeId = new mongoose.Types.ObjectId().toString();
+    const response = await request(app)
+      .put(`/post/${fakeId}`)
+      .set("Authorization", "Bearer " + userInfo.accessToken)
       .send({
-        title: "updated title", });
-      expect(response.status).toBe(400);
-    })
+        title: "Should Not Work",
+        content: "No post found",
+      });
 
+    expect(response.status).toBe(404);
+    expect(response.body.message).toBe("Post not found");
+  });
 
+  test("PUT /post/:id - fails with missing fields", async () => {
+    const response = await request(app)
+      .put(`/post/${postId}`)
+      .set("Authorization", "Bearer " + userInfo.accessToken)
+      .send({
+        title: "Only title updated",
+      });
 
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Missing data");
+  });
 
-  
+  test("DELETE /post/:id - deletes a post", async () => {
+    const response = await request(app)
+      .delete(`/post/${postId}`)
+      .set("Authorization", "Bearer " + userInfo.accessToken);
+
+    console.log("✅ Delete Post Response:", response.body);
+
+    expect(response.status).toBe(200);
+    expect(response.body.message).toBe("Post deleted successfully");
+  });
+
+  test("DELETE /post/:id - fails on non-existing post", async () => {
+    const fakeId = new mongoose.Types.ObjectId().toString();
+    const response = await request(app)
+      .delete(`/post/${fakeId}`)
+      .set("Authorization", "Bearer " + userInfo.accessToken);
+
+    expect(response.status).toBe(404);
+  });
 });

@@ -3,6 +3,7 @@ import Post, { IPost } from "../models/PostModel";
 import Comment from "../models/CommentModel";
 import { Request, Response } from "express";
 import { log } from "console";
+import mongoose from "mongoose";
 
 class PostController extends BaseController<IPost> {
   constructor() {
@@ -36,35 +37,43 @@ class PostController extends BaseController<IPost> {
 
   async create(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user?._id;        
-      const userEmail = req.user?.email;   
-      const userUsername = req.user?.username;
-      const userProfileImage = req.user?.profileImage;
-
+      console.log("📩 Incoming request:", req.body);
+      const userId = req.user?._id;
       if (!userId) {
-         res.status(401).json({ message: "Unauthorized" });
-         return;
+        res.status(401).json({ message: "Unauthorized: User not authenticated" });
+        return;
       }
-  
-      const image = req.file?.path;
-      if (!req.body.title || !req.body.content) {
-       res.status(400).json({ message: "Missing required fields" });
-       return;
+      const { title, content } = req.body;
+      if (!title || !content) {
+        res.status(400).json({ message: "Missing required fields: title and content" });
+        return;
       }
-      req.body.email = userEmail; 
-      req.body.username = userUsername;
-      req.body.userProfileImage = userProfileImage;
-      req.body.owner = userId;
-      req.body.image = image;
-      req.body.comments = [];
-      console.log(req.body);
+      const userEmail = req.user?.email || "unknown@example.com";
+      const userUsername = req.user?.username || "Anonymous";
+      const userProfileImage = req.user?.profileImage || "https://example.com/default-avatar.jpg";
+      const imagePath = req.file?.path || "https://example.com/default-image.jpg";
   
-      await super.create(req, res);
+      const newPost = new Post({
+        title,
+        content,
+        email: userEmail,
+        username: userUsername,
+        userProfileImage: userProfileImage,
+        owner: userId,
+        image: imagePath,
+        comments: []
+      });
+  
+      const savedPost = await newPost.save();
+      console.log("✅ Post successfully created:", savedPost);
+  
+      res.status(201).json(savedPost);
     } catch (error) {
-      console.error("Error in create:", error);
+      console.error("❌ Error creating post:", error);
       res.status(500).json({ message: "Error creating post", error });
     }
   }
+  
 
   async getAll(req: Request, res: Response): Promise<void> {
     try {
@@ -102,6 +111,27 @@ class PostController extends BaseController<IPost> {
     res.status(500).json({ message: "Error deleting post", error });
   }
 }
+async getPostById(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ message: "Invalid post ID format" });
+      return;
+    }
+
+    const post = await Post.findById(id);
+    if (!post) {
+      res.status(404).json({ message: "Post not found" });
+      return;
+    }
+
+    res.status(200).json(post);
+  } catch (error) {
+    res.status(500).json({ message: "Error retrieving post", error });
+  }
+}
+
 }
 
 export default new PostController();
