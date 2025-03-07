@@ -13,7 +13,6 @@ const startServer = async () => {
       console.log(`Server is running on https://10.10.246.24:${port}`);
     });
   } else{
-    try{
       const prop = {
         key: fs.readFileSync("/home/st111/client-key.pem"),
         cert: fs.readFileSync("/home/st111/client-cert.pem")
@@ -22,11 +21,6 @@ const startServer = async () => {
       
     https.createServer(prop,app).listen(port);
     console.log(`HTTPS Server is running on https://10.10.246.24:${port}`);
-  }
-  catch (error) {
-    console.error("Failed to load SSL certificates:", error);
-    process.exit(1);
-  }
   }
  } catch (error) {
     console.error("Failed to start the server:", error);

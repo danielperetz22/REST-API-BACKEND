@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import Post from "../models/PostModel";
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import userModel, { IUser } from "../models/AuthModel";
@@ -393,18 +394,17 @@ const updateUserProfile = async (req: Request, res: Response) => {
     if (!userId) {
       console.log("Error: No user ID found in request");
        res.status(400).json({ message: "Invalid user ID" });
-       return
+       return;
     }
 
     const currentUser = await userModel.findById(userId);
     if (!currentUser) {
       console.log("User not found in DB");
-       res.status(404).json({ message: "User not found" });
-       return
+      res.status(404).json({ message: "User not found" });
+      return;
     }
-   
 
-    const { username, email, oldPassword,confirmNewPassword, newPassword } = req.body;
+    const { username, email, oldPassword, confirmNewPassword, newPassword } = req.body;
     const updates: Partial<IUser> = {};
 
     if (username && username.trim() !== "") {
@@ -418,73 +418,90 @@ const updateUserProfile = async (req: Request, res: Response) => {
 
     if (email && email.trim() !== "") {
       const newEmail = email.trim();
-      if(newEmail != currentUser.email){
-      const userWithSameEmail = await userModel.findOne({ email: newEmail });
-      if (userWithSameEmail && userWithSameEmail._id !== userId) {
-         res.status(400).json({ message: "Email already in use" });
-         return
+      if (newEmail !== currentUser.email) {
+        const userWithSameEmail = await userModel.findOne({ email: newEmail });
+        if (userWithSameEmail?._id && userWithSameEmail._id.toString() !== userId.toString()) {
+
+          res.status(400).json({ message: "Email already in use" });
+          return;
+        }
+        updates.email = newEmail;
       }
-      updates.email = newEmail;
     }
-  }
 
     if (newPassword && newPassword.trim() !== "") {
       if (newPassword !== confirmNewPassword) {
-         res.status(400).json({ message: "New passwords do not match" });
-        return
+        res.status(400).json({ message: "New passwords do not match" });
+        return;
       }
       const hasLocalPassword = currentUser.password && currentUser.password.trim() !== "";
       if (hasLocalPassword) {
         if (!oldPassword) {
            res.status(400).json({ message: "Old password is required to change password" });
-           return
+           return;
         }
         const isMatch = await bcrypt.compare(oldPassword, currentUser.password);
         if (!isMatch) {
-           res.status(400).json({ message: "Incorrect old password" });
-           return
+          res.status(400).json({ message: "Incorrect old password" });
+          return;
         }
       }
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(newPassword.trim(), salt);
       updates.password = hashedPassword;
     }
-      
+
     if (Object.keys(updates).length === 0) {
-       res.status(400).json({ message: "No updates provided" });
-       return
+      res.status(400).json({ message: "No updates provided" });
+      return;
     }
 
-    const updatedUser = await userModel.findByIdAndUpdate(userId, { $set: updates }, { new: true, runValidators: true });
+    const updatedUser = await userModel.findByIdAndUpdate(
+      userId,
+      { $set: updates },
+      { new: true, runValidators: true }
+    );
     if (!updatedUser) {
-      
-       res.status(404).json({ message: "User not found" });
-       return
+      res.status(404).json({ message: "User not found" });
+      return;
     }
 
     const profileImageUrl = updatedUser.profileImage
       ? `https://10.10.246.24/${updatedUser.profileImage.replace(/\\/g, "/")}`
       : null;
 
-    const response = {
-      message: "User profile updated successfully",
+    await Post.updateMany(
+      { owner: userId },
+      {
+        username: updatedUser.username,
+        email: updatedUser.email,
+        userProfileImage: updatedUser.profileImage ? updatedUser.profileImage.replace(/\\/g, "/") : ""
+      }
+    );
+
+
+    const responseData = {
+      message: "User profile updated successfully, and posts updated!",
       user: {
         _id: updatedUser._id,
         email: updatedUser.email,
         username: updatedUser.username,
-        profileImage: profileImageUrl
-      }
+        profileImage: profileImageUrl,
+      },
     };
 
-    res.status(200).json(response);
+    res.status(200).json(responseData);
+    return;
   } catch (err) {
     console.error("Error in updateUserProfile:", err);
-    res.status(500).json({ 
-      message: "Internal server error", 
-      error: err instanceof Error ? err.message : String(err)
+    res.status(500).json({
+      message: "Internal server error",
+      error: err instanceof Error ? err.message : String(err),
     });
+    return;
   }
 };
+
 
 
 

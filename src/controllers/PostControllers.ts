@@ -51,7 +51,8 @@ class PostController extends BaseController<IPost> {
       const userEmail = req.user?.email || "unknown@example.com";
       const userUsername = req.user?.username || "Anonymous";
       const userProfileImage = req.user?.profileImage || "https://example.com/default-avatar.jpg";
-      const imagePath = req.file?.path || "https://example.com/default-image.jpg";
+      const imagePath = req.file ? `uploads/${req.file.filename}` : "https://example.com/default-image.jpg";
+
   
       const newPost = new Post({
         title,

@@ -20,17 +20,20 @@ if (!fs.existsSync(uploadsDir)) {
 dotenv.config();
 const app = express();
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 }));
+
+
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/post', postRoutes);
 app.use('/comment', CommentRoutes);
 app.use('/auth', AuthRoutes);
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 app.use("/api/gemini", geminiRoutes);
 
 
@@ -48,6 +51,18 @@ const options = {
 };
 const specs = swaggerJsdoc(options);
 app.use("/api-docs",swaggerUi.serve,swaggerUi.setup(specs));
+
+
+const frontPath = "/home/st111/REST-API-BACKEND/front";
+console.log("📂 Serving Frontend from:", frontPath);
+
+app.use(express.static(frontPath));
+
+app.get("*", (req, res) => {
+  console.log("🔍 Request received for:", req.url);
+  res.sendFile(path.join(frontPath, "index.html"));
+});
+
 
 
 

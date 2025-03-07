@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authMiddleware = void 0;
+const PostModel_1 = __importDefault(require("../models/PostModel"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const AuthModel_1 = __importDefault(require("../models/AuthModel"));
@@ -332,9 +333,9 @@ const updateUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, functi
         }
         if (email && email.trim() !== "") {
             const newEmail = email.trim();
-            if (newEmail != currentUser.email) {
+            if (newEmail !== currentUser.email) {
                 const userWithSameEmail = yield AuthModel_1.default.findOne({ email: newEmail });
-                if (userWithSameEmail && userWithSameEmail._id !== userId) {
+                if ((userWithSameEmail === null || userWithSameEmail === void 0 ? void 0 : userWithSameEmail._id) && userWithSameEmail._id.toString() !== userId.toString()) {
                     res.status(400).json({ message: "Email already in use" });
                     return;
                 }
@@ -374,23 +375,30 @@ const updateUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, functi
         const profileImageUrl = updatedUser.profileImage
             ? `https://10.10.246.24/${updatedUser.profileImage.replace(/\\/g, "/")}`
             : null;
-        const response = {
-            message: "User profile updated successfully",
+        yield PostModel_1.default.updateMany({ owner: userId }, {
+            username: updatedUser.username,
+            email: updatedUser.email,
+            userProfileImage: updatedUser.profileImage ? updatedUser.profileImage.replace(/\\/g, "/") : ""
+        });
+        const responseData = {
+            message: "User profile updated successfully, and posts updated!",
             user: {
                 _id: updatedUser._id,
                 email: updatedUser.email,
                 username: updatedUser.username,
-                profileImage: profileImageUrl
-            }
+                profileImage: profileImageUrl,
+            },
         };
-        res.status(200).json(response);
+        res.status(200).json(responseData);
+        return;
     }
     catch (err) {
         console.error("Error in updateUserProfile:", err);
         res.status(500).json({
             message: "Internal server error",
-            error: err instanceof Error ? err.message : String(err)
+            error: err instanceof Error ? err.message : String(err),
         });
+        return;
     }
 });
 exports.default = { register, login, refresh, logout, googleLoginOrRegister, getUserProfile, updateUserProfile };

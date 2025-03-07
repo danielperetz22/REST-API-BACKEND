@@ -42,7 +42,7 @@ class PostController extends baseController_1.BaseController {
     }
     create(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e;
+            var _a, _b, _c, _d;
             try {
                 console.log("📩 Incoming request:", req.body);
                 const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
@@ -58,7 +58,7 @@ class PostController extends baseController_1.BaseController {
                 const userEmail = ((_b = req.user) === null || _b === void 0 ? void 0 : _b.email) || "unknown@example.com";
                 const userUsername = ((_c = req.user) === null || _c === void 0 ? void 0 : _c.username) || "Anonymous";
                 const userProfileImage = ((_d = req.user) === null || _d === void 0 ? void 0 : _d.profileImage) || "https://example.com/default-avatar.jpg";
-                const imagePath = ((_e = req.file) === null || _e === void 0 ? void 0 : _e.path) || "https://example.com/default-image.jpg";
+                const imagePath = req.file ? `uploads/${req.file.filename}` : "https://example.com/default-image.jpg";
                 const newPost = new PostModel_1.default({
                     title,
                     content,

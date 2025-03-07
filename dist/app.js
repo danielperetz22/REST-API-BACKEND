@@ -25,18 +25,12 @@ const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
             });
         }
         else {
-            try {
-                const prop = {
-                    key: fs_1.default.readFileSync("/home/st111/client-key.pem"),
-                    cert: fs_1.default.readFileSync("/home/st111/client-cert.pem")
-                };
-                https_1.default.createServer(prop, app).listen(port);
-                console.log(`HTTPS Server is running on https://10.10.246.24:${port}`);
-            }
-            catch (error) {
-                console.error("Failed to load SSL certificates:", error);
-                process.exit(1);
-            }
+            const prop = {
+                key: fs_1.default.readFileSync("/home/st111/client-key.pem"),
+                cert: fs_1.default.readFileSync("/home/st111/client-cert.pem")
+            };
+            https_1.default.createServer(prop, app).listen(port);
+            console.log(`HTTPS Server is running on https://10.10.246.24:${port}`);
         }
     }
     catch (error) {

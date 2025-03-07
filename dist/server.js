@@ -32,8 +32,9 @@ if (!fs_1.default.existsSync(uploadsDir)) {
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
-    origin: "http://localhost:5173",
+    origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
 }));
 app.use(body_parser_1.default.json());
@@ -41,7 +42,7 @@ app.use(body_parser_1.default.urlencoded({ extended: true }));
 app.use('/post', PostsRoutes_1.default);
 app.use('/comment', CommentRoutes_1.default);
 app.use('/auth', AuthRoutes_1.default);
-app.use("/uploads", express_1.default.static("uploads"));
+app.use("/uploads", express_1.default.static(path_1.default.join(__dirname, "../uploads")));
 app.use("/api/gemini", geminiRoutes_1.default);
 const options = {
     definition: {
@@ -57,6 +58,13 @@ const options = {
 };
 const specs = (0, swagger_jsdoc_1.default)(options);
 app.use("/api-docs", swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(specs));
+const frontPath = "/home/st111/REST-API-BACKEND/front";
+console.log("📂 Serving Frontend from:", frontPath);
+app.use(express_1.default.static(frontPath));
+app.get("*", (req, res) => {
+    console.log("🔍 Request received for:", req.url);
+    res.sendFile(path_1.default.join(frontPath, "index.html"));
+});
 const initApp = () => __awaiter(void 0, void 0, void 0, function* () {
     return new Promise((resolve, reject) => {
         const db = mongoose_1.default.connection;

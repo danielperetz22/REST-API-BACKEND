@@ -4,7 +4,7 @@
   "description": "Hila and Daniel assigment1-Eliav",
   "main": "app.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig_prod.json",
     "dev": "tsc && nodemon dist/app.js",
     "prod": "tsc -p tsconfig_prod.json && nodemon dist/app.js",
     "start": "node dist/app.js",
