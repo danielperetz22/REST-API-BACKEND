@@ -290,3 +290,4 @@ router.get('/testAuth', AuthControllers_1.authMiddleware, (req, res) => {
     res.status(200).json({ message: 'You are authenticated' });
 });
 exports.default = router;
+//# sourceMappingURL=AuthRoutes.js.map

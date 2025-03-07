@@ -23,3 +23,4 @@ const fileFilter = (req, file, cb) => {
     }
 };
 exports.upload = (0, multer_1.default)({ storage, fileFilter });
+//# sourceMappingURL=uploadMiddleware.js.map

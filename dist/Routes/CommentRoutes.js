@@ -225,3 +225,4 @@ router.delete("/:id", AuthControllers_1.authMiddleware, (req, res) => {
     CommentControllers_1.default.deleteComment(req, res);
 });
 exports.default = router;
+//# sourceMappingURL=CommentRoutes.js.map

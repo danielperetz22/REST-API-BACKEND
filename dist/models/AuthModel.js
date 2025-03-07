@@ -42,3 +42,4 @@ const UserSchema = new mongoose_1.Schema({
     profileImage: { type: String, default: "" },
 }, { timestamps: true });
 exports.default = mongoose_1.default.model('User', UserSchema);
+//# sourceMappingURL=AuthModel.js.map

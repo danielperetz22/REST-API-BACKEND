@@ -209,3 +209,4 @@ router.delete("/:id", AuthControllers_1.authMiddleware, (req, res) => {
     PostControllers_1.default.deletePost(req, res);
 });
 exports.default = router;
+//# sourceMappingURL=PostsRoutes.js.map

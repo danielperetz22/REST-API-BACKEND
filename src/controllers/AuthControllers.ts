@@ -371,7 +371,7 @@ const getUserProfile = async (req: Request, res: Response) => {
        return
     }
     const profileImageUrl = user.profileImage
-    ? `http://localhost:3000/${user.profileImage.replace(/\\/g, "/")}` 
+    ? `https://10.10.246.24/${user.profileImage.replace(/\\/g, "/")}` 
     : "https://example.com/default-avatar.jpg";
     
 
@@ -463,7 +463,7 @@ const updateUserProfile = async (req: Request, res: Response) => {
     }
 
     const profileImageUrl = updatedUser.profileImage
-      ? `http://localhost:3000/${updatedUser.profileImage.replace(/\\/g, "/")}`
+      ? `https://10.10.246.24/${updatedUser.profileImage.replace(/\\/g, "/")}`
       : null;
 
     const response = {

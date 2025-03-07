@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -19,7 +28,7 @@ const generateTokens = (_id) => {
     const refreshToken = jsonwebtoken_1.default.sign({ _id: _id, rand: rand }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION || '7d' });
     return { refreshToken, accessToken };
 };
-const register = async (req, res) => {
+const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const { email, password, username } = req.body;
     const profileImage = ((_a = req.file) === null || _a === void 0 ? void 0 : _a.path) || "";
@@ -36,14 +45,14 @@ const register = async (req, res) => {
         return;
     }
     try {
-        const existingUser = await AuthModel_1.default.findOne({ email });
+        const existingUser = yield AuthModel_1.default.findOne({ email });
         if (existingUser) {
             res.status(400).json({ error: "Email already in use" });
             return;
         }
-        const salt = await bcrypt_1.default.genSalt(10);
-        const hashedPassword = await bcrypt_1.default.hash(password, salt);
-        const user = await AuthModel_1.default.create({
+        const salt = yield bcrypt_1.default.genSalt(10);
+        const hashedPassword = yield bcrypt_1.default.hash(password, salt);
+        const user = yield AuthModel_1.default.create({
             email,
             username,
             password: hashedPassword,
@@ -64,8 +73,8 @@ const register = async (req, res) => {
         console.error("Error in register:", err);
         res.status(500).json({ message: "Internal server error", error: err });
     }
-};
-const login = async (req, res) => {
+});
+const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = req.body;
     try {
         console.log("Login request received with email:", email);
@@ -73,13 +82,13 @@ const login = async (req, res) => {
             res.status(400).json({ message: "Email and password are required" });
             return;
         }
-        const user = await AuthModel_1.default.findOne({ email });
+        const user = yield AuthModel_1.default.findOne({ email });
         if (!user) {
             console.log("User not found for email:", email);
             res.status(400).json({ message: "Invalid email or password" });
             return;
         }
-        const validPassword = await bcrypt_1.default.compare(password, user.password);
+        const validPassword = yield bcrypt_1.default.compare(password, user.password);
         if (!validPassword) {
             console.log("Invalid password for email:", email);
             res.status(400).json({ message: "Invalid email or password" });
@@ -95,7 +104,7 @@ const login = async (req, res) => {
             user.refeshtokens = [];
         }
         user.refeshtokens.push(tokens.refreshToken);
-        await user.save();
+        yield user.save();
         console.log("Login success for user:", {
             _id: user._id,
             email: user.email,
@@ -108,7 +117,7 @@ const login = async (req, res) => {
         console.error("Error during login:", err);
         res.status(500).json({ message: "Error during login", error: err });
     }
-};
+});
 const validateRefreshToken = (refreshToken) => {
     return new Promise((resolve, reject) => {
         if (!refreshToken) {
@@ -119,7 +128,7 @@ const validateRefreshToken = (refreshToken) => {
             reject("error");
             return;
         }
-        jsonwebtoken_1.default.verify(refreshToken, process.env.ACCESS_TOKEN_SECRET, async (err, payload) => {
+        jsonwebtoken_1.default.verify(refreshToken, process.env.ACCESS_TOKEN_SECRET, (err, payload) => __awaiter(void 0, void 0, void 0, function* () {
             if (err) {
                 reject(err);
                 return;
@@ -130,7 +139,7 @@ const validateRefreshToken = (refreshToken) => {
                 return;
             }
             try {
-                const user = await AuthModel_1.default.findById(userId);
+                const user = yield AuthModel_1.default.findById(userId);
                 if (!user) {
                     reject("error");
                     return;
@@ -144,12 +153,12 @@ const validateRefreshToken = (refreshToken) => {
             catch (err) {
                 reject(err);
             }
-        });
+        }));
     });
 };
-const refresh = async (req, res) => {
+const refresh = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const user = await validateRefreshToken(req.body.refreshToken);
+        const user = yield validateRefreshToken(req.body.refreshToken);
         const tokens = generateTokens(user._id);
         if (!tokens) {
             res.status(400).send("error");
@@ -157,30 +166,30 @@ const refresh = async (req, res) => {
         }
         user.refeshtokens = user.refeshtokens.filter((token) => token !== req.body.refreshToken);
         user.refeshtokens.push(tokens.refreshToken);
-        await user.save();
+        yield user.save();
         res.status(200).send(Object.assign(Object.assign({}, tokens), { _id: user._id }));
     }
     catch (err) {
         res.status(400).send("error");
     }
-};
-const logout = async (req, res) => {
+});
+const logout = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const user = await validateRefreshToken(req.body.refreshToken);
+        const user = yield validateRefreshToken(req.body.refreshToken);
         if (!user) {
             res.status(400).send("error");
             return;
         }
         user.refeshtokens = user.refeshtokens.filter((token) => token !== req.body.refreshToken);
-        await user.save();
+        yield user.save();
         res.status(200).send("logged out");
     }
     catch (err) {
         res.status(400).send("error");
         return;
     }
-};
-const authMiddleware = async (req, res, next) => {
+});
+const authMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const tokenHeader = req.headers["authorization"];
     const token = tokenHeader && tokenHeader.split(" ")[1];
     if (!token) {
@@ -191,13 +200,13 @@ const authMiddleware = async (req, res, next) => {
         res.status(500).send("Server error: Missing token secret");
         return;
     }
-    jsonwebtoken_1.default.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, payload) => {
+    jsonwebtoken_1.default.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, payload) => __awaiter(void 0, void 0, void 0, function* () {
         if (err) {
             res.status(400).send("Access denied: Invalid token");
             return;
         }
         try {
-            const user = await AuthModel_1.default.findById(payload._id)
+            const user = yield AuthModel_1.default.findById(payload._id)
                 .select("_id email username profileImage");
             if (!user) {
                 res.status(404).send("User not found");
@@ -214,14 +223,14 @@ const authMiddleware = async (req, res, next) => {
         catch (error) {
             res.status(500).send("Server error");
         }
-    });
-};
+    }));
+});
 exports.authMiddleware = authMiddleware;
-const googleLoginOrRegister = async (req, res) => {
+const googleLoginOrRegister = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { token } = req.body;
     try {
         console.log("Received token:", token);
-        const ticket = await client.verifyIdToken({
+        const ticket = yield client.verifyIdToken({
             idToken: token,
             audience: process.env.GOOGLE_CLIENT_ID,
         });
@@ -238,10 +247,10 @@ const googleLoginOrRegister = async (req, res) => {
             res.status(400).json({ message: "Google account email is required." });
             return;
         }
-        let user = await AuthModel_1.default.findOne({ email });
+        let user = yield AuthModel_1.default.findOne({ email });
         if (!user) {
             console.log("Creating new user for email:", email);
-            user = await AuthModel_1.default.create({
+            user = yield AuthModel_1.default.create({
                 email,
                 username: name || email,
                 password: "",
@@ -258,7 +267,7 @@ const googleLoginOrRegister = async (req, res) => {
             user.refeshtokens = [];
         }
         user.refeshtokens.push(tokens.refreshToken);
-        await user.save();
+        yield user.save();
         res.status(200).json(Object.assign(Object.assign({}, tokens), { user: {
                 _id: user._id,
                 email: user.email,
@@ -270,20 +279,20 @@ const googleLoginOrRegister = async (req, res) => {
         console.error("Error during Google login/register:", error);
         res.status(500).json({ message: "Error logging in/registering with Google.", error });
     }
-};
-const getUserProfile = async (req, res) => {
+});
+const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         if (!req.user || !req.user._id) {
             res.status(400).json({ message: "Invalid user ID" });
             return;
         }
-        const user = await AuthModel_1.default.findById(req.user._id);
+        const user = yield AuthModel_1.default.findById(req.user._id);
         if (!user) {
             res.status(404).json({ message: "User not found" });
             return;
         }
         const profileImageUrl = user.profileImage
-            ? `http://localhost:3000/${user.profileImage.replace(/\\/g, "/")}`
+            ? `https://10.10.246.24/${user.profileImage.replace(/\\/g, "/")}`
             : "https://example.com/default-avatar.jpg";
         res.status(200).json({
             _id: user._id,
@@ -296,8 +305,8 @@ const getUserProfile = async (req, res) => {
         console.error("Error getting user profile:", err);
         res.status(500).json({ message: "Internal server error", error: err });
     }
-};
-const updateUserProfile = async (req, res) => {
+});
+const updateUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
@@ -306,7 +315,7 @@ const updateUserProfile = async (req, res) => {
             res.status(400).json({ message: "Invalid user ID" });
             return;
         }
-        const currentUser = await AuthModel_1.default.findById(userId);
+        const currentUser = yield AuthModel_1.default.findById(userId);
         if (!currentUser) {
             console.log("User not found in DB");
             res.status(404).json({ message: "User not found" });
@@ -324,7 +333,7 @@ const updateUserProfile = async (req, res) => {
         if (email && email.trim() !== "") {
             const newEmail = email.trim();
             if (newEmail != currentUser.email) {
-                const userWithSameEmail = await AuthModel_1.default.findOne({ email: newEmail });
+                const userWithSameEmail = yield AuthModel_1.default.findOne({ email: newEmail });
                 if (userWithSameEmail && userWithSameEmail._id !== userId) {
                     res.status(400).json({ message: "Email already in use" });
                     return;
@@ -343,27 +352,27 @@ const updateUserProfile = async (req, res) => {
                     res.status(400).json({ message: "Old password is required to change password" });
                     return;
                 }
-                const isMatch = await bcrypt_1.default.compare(oldPassword, currentUser.password);
+                const isMatch = yield bcrypt_1.default.compare(oldPassword, currentUser.password);
                 if (!isMatch) {
                     res.status(400).json({ message: "Incorrect old password" });
                     return;
                 }
             }
-            const salt = await bcrypt_1.default.genSalt(10);
-            const hashedPassword = await bcrypt_1.default.hash(newPassword.trim(), salt);
+            const salt = yield bcrypt_1.default.genSalt(10);
+            const hashedPassword = yield bcrypt_1.default.hash(newPassword.trim(), salt);
             updates.password = hashedPassword;
         }
         if (Object.keys(updates).length === 0) {
             res.status(400).json({ message: "No updates provided" });
             return;
         }
-        const updatedUser = await AuthModel_1.default.findByIdAndUpdate(userId, { $set: updates }, { new: true, runValidators: true });
+        const updatedUser = yield AuthModel_1.default.findByIdAndUpdate(userId, { $set: updates }, { new: true, runValidators: true });
         if (!updatedUser) {
             res.status(404).json({ message: "User not found" });
             return;
         }
         const profileImageUrl = updatedUser.profileImage
-            ? `http://localhost:3000/${updatedUser.profileImage.replace(/\\/g, "/")}`
+            ? `https://10.10.246.24/${updatedUser.profileImage.replace(/\\/g, "/")}`
             : null;
         const response = {
             message: "User profile updated successfully",
@@ -383,5 +392,6 @@ const updateUserProfile = async (req, res) => {
             error: err instanceof Error ? err.message : String(err)
         });
     }
-};
+});
 exports.default = { register, login, refresh, logout, googleLoginOrRegister, getUserProfile, updateUserProfile };
+//# sourceMappingURL=AuthControllers.js.map
