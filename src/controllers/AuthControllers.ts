@@ -103,7 +103,7 @@ const register = async (req: Request, res: Response) => {
         _id: user._id,
         email: user.email,
         username: user.username,
-        profileImage: user.profileImage, 
+        profileImage: user.profileImage ||"/src/assets/profile-default.jpg" , 
       },
     });
 
@@ -390,9 +390,8 @@ const getUserProfile = async (req: Request, res: Response) => {
        return
     }
     const profileImageUrl = user.profileImage
-    ? `https://10.10.246.24/${user.profileImage.replace(/\\/g, "/")}` 
-    : "https://example.com/default-avatar.jpg";
-    
+  ? `https://node24.cs.colman.ac.il/uploads/${user.profileImage}`
+  : "https://example.com/default-avatar.jpg";
 
     res.status(200).json({
       _id: user._id,
@@ -485,8 +484,8 @@ const updateUserProfile = async (req: Request, res: Response) => {
     }
 
     const profileImageUrl = updatedUser.profileImage
-      ? `https://10.10.246.24/${updatedUser.profileImage.replace(/\\/g, "/")}`
-      : null;
+      ? `https://node24.cs.colman.ac.il/uploads/${updatedUser.profileImage.replace(/\\/g, "/")}`
+      : "https://node24.cs.colman.ac.il/uploads/default-avatar.jpg"; 
 
     await Post.updateMany(
       { owner: userId },

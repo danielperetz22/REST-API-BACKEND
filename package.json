@@ -5,6 +5,7 @@
   "main": "app.js",
   "scripts": {
     "build": "tsc -p tsconfig_prod.json",
+    "pm2" : " pm2 restart REST-API-BACKEND --update-env",
     "dev": "tsc && nodemon dist/app.js",
     "prod": "tsc -p tsconfig_prod.json && nodemon dist/app.js",
     "start": "node dist/app.js",

@@ -80,7 +80,7 @@ const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 _id: user._id,
                 email: user.email,
                 username: user.username,
-                profileImage: user.profileImage,
+                profileImage: user.profileImage || "/src/assets/profile-default.jpg",
             } }));
         return;
     }
@@ -307,7 +307,7 @@ const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function*
             return;
         }
         const profileImageUrl = user.profileImage
-            ? `https://10.10.246.24/${user.profileImage.replace(/\\/g, "/")}`
+            ? `https://node24.cs.colman.ac.il/uploads/${user.profileImage}`
             : "https://example.com/default-avatar.jpg";
         res.status(200).json({
             _id: user._id,
@@ -387,8 +387,8 @@ const updateUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, functi
             return;
         }
         const profileImageUrl = updatedUser.profileImage
-            ? `https://10.10.246.24/${updatedUser.profileImage.replace(/\\/g, "/")}`
-            : null;
+            ? `https://node24.cs.colman.ac.il/uploads/${updatedUser.profileImage.replace(/\\/g, "/")}`
+            : "https://node24.cs.colman.ac.il/uploads/default-avatar.jpg";
         yield PostModel_1.default.updateMany({ owner: userId }, {
             username: updatedUser.username,
             email: updatedUser.email,

@@ -45,7 +45,7 @@ const options = {
       version: "1.0.0",
       description: "REST server including authentication using JWT",
     },
-    servers: [{ url: "https://10.10.246.24" }],
+    servers: [{ url: "https://node24.cs.colman.ac.il" }],
   },
   apis: ["./src/Routes/*.ts"],
 };

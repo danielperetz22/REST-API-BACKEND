@@ -55,7 +55,7 @@ class CommentController extends BaseController<IComment> {
   }
 
   async updateComment(req: Request, res: Response): Promise<void> {
-    const commentID = req.params._id;
+    const commentID = req.params.id; 
     const newContent = req.body.comment;
 
     try {
@@ -89,7 +89,7 @@ class CommentController extends BaseController<IComment> {
 }
 
   async deleteComment(req: Request, res: Response) {
-    const commentID = req.params._id;
+    const commentID = req.params.id; 
     try {
       const comment = await Comment.findById(commentID);
       if (!comment) {

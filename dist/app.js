@@ -21,7 +21,7 @@ const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
         const app = yield (0, server_1.default)();
         if (process.env.NODE_ENV != "production") {
             app.listen(port, () => {
-                console.log(`Server is running on https://10.10.246.24:${port}`);
+                console.log(`Server is running on https://node24.cs.colman.ac.il/:${port}`);
             });
         }
         else {
@@ -30,7 +30,7 @@ const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
                 cert: fs_1.default.readFileSync("/home/st111/client-cert.pem")
             };
             https_1.default.createServer(prop, app).listen(port);
-            console.log(`HTTPS Server is running on https://10.10.246.24:${port}`);
+            console.log(`HTTPS Server is running on https://node24.cs.colman.ac.il/:${port}`);
         }
     }
     catch (error) {

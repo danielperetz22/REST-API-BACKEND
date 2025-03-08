@@ -67,7 +67,7 @@ class CommentController extends baseController_1.BaseController {
     updateComment(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a;
-            const commentID = req.params._id;
+            const commentID = req.params.id;
             const newContent = req.body.comment;
             try {
                 const comment = yield CommentModel_1.default.findById(commentID);
@@ -96,7 +96,7 @@ class CommentController extends baseController_1.BaseController {
     }
     deleteComment(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            const commentID = req.params._id;
+            const commentID = req.params.id;
             try {
                 const comment = yield CommentModel_1.default.findById(commentID);
                 if (!comment) {

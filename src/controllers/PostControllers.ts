@@ -19,7 +19,7 @@ class PostController extends BaseController<IPost> {
       }
 
       const postToUpdate = await Post.findByIdAndUpdate(
-        req.params._id,
+        req.params.id,
         { title, content },
         { new: true }
       );

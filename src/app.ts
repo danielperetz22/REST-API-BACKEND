@@ -10,7 +10,7 @@ const startServer = async () => {
 
     if(process.env.NODE_ENV != "production"){
     app.listen(port, () => {
-      console.log(`Server is running on https://10.10.246.24:${port}`);
+      console.log(`Server is running on https://node24.cs.colman.ac.il/:${port}`);
     });
   } else{
       const prop = {
@@ -20,7 +20,7 @@ const startServer = async () => {
       };
       
     https.createServer(prop,app).listen(port);
-    console.log(`HTTPS Server is running on https://10.10.246.24:${port}`);
+    console.log(`HTTPS Server is running on https://node24.cs.colman.ac.il/:${port}`);
   }
  } catch (error) {
     console.error("Failed to start the server:", error);

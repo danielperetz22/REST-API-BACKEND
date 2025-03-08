@@ -28,7 +28,7 @@ class PostController extends baseController_1.BaseController {
                     res.status(400).json({ message: "Missing data" });
                     return;
                 }
-                const postToUpdate = yield PostModel_1.default.findByIdAndUpdate(req.params._id, { title, content }, { new: true });
+                const postToUpdate = yield PostModel_1.default.findByIdAndUpdate(req.params.id, { title, content }, { new: true });
                 if (!postToUpdate) {
                     res.status(404).json({ message: "Post not found" });
                     return;
