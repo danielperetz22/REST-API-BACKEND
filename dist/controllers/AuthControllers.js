@@ -59,19 +59,33 @@ const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             password: hashedPassword,
             profileImage,
         });
-        res.status(201).json({
-            message: "User registered successfully",
-            user: {
+        // 🚨 יצירת טוקנים כמו ב-login
+        const tokens = generateTokens(user._id);
+        if (!tokens) {
+            console.log("❌ Failed to generate tokens for user:", user._id);
+            res.status(500).json({ message: "Failed to generate tokens" });
+            return;
+        }
+        // 🚨 שמירת רענון טוקן במשתמש
+        user.refeshtokens = user.refeshtokens || [];
+        user.refeshtokens.push(tokens.refreshToken);
+        yield user.save();
+        console.log("✅ Registration Data Sent to Frontend:", Object.assign(Object.assign({}, tokens), { user: {
                 _id: user._id,
                 email: user.email,
                 username: user.username,
                 profileImage: user.profileImage,
-            },
-        });
+            } }));
+        res.status(201).json(Object.assign(Object.assign({}, tokens), { user: {
+                _id: user._id,
+                email: user.email,
+                username: user.username,
+                profileImage: user.profileImage,
+            } }));
         return;
     }
     catch (err) {
-        console.error("Error in register:", err);
+        console.error("❌ Error in register:", err);
         res.status(500).json({ message: "Internal server error", error: err });
     }
 });

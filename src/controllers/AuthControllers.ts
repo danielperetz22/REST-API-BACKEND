@@ -43,7 +43,6 @@ const register = async (req: Request, res: Response) => {
   const { email, password, username } = req.body;
   const profileImage = req.file?.path || ""; 
 
- 
   if (!email || typeof email !== "string") {
     res.status(400).json({ message: "Email is required and must be a string" });
     return;
@@ -58,20 +57,16 @@ const register = async (req: Request, res: Response) => {
   }
 
   try {
-    
     const existingUser = await userModel.findOne({ email });
 
     if (existingUser) {
       res.status(400).json({ error: "Email already in use" });
       return;
     }
-    
 
-    
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-   
     const user: IUser = await userModel.create({
       email,
       username,
@@ -79,9 +74,31 @@ const register = async (req: Request, res: Response) => {
       profileImage, 
     });
 
-  
+    // 🚨 יצירת טוקנים כמו ב-login
+    const tokens = generateTokens(user._id as string);
+    if (!tokens) {
+      console.log("❌ Failed to generate tokens for user:", user._id);
+      res.status(500).json({ message: "Failed to generate tokens" });
+      return;
+    }
+
+    // 🚨 שמירת רענון טוקן במשתמש
+    user.refeshtokens = user.refeshtokens || [];
+    user.refeshtokens.push(tokens.refreshToken);
+    await user.save();
+
+    console.log("✅ Registration Data Sent to Frontend:", {
+      ...tokens,
+      user: {
+        _id: user._id,
+        email: user.email,
+        username: user.username,
+        profileImage: user.profileImage,
+      },
+    });
+
     res.status(201).json({
-      message: "User registered successfully",
+      ...tokens,
       user: {
         _id: user._id,
         email: user.email,
@@ -89,9 +106,10 @@ const register = async (req: Request, res: Response) => {
         profileImage: user.profileImage, 
       },
     });
+
     return;
   } catch (err) {
-    console.error("Error in register:", err);
+    console.error("❌ Error in register:", err);
     res.status(500).json({ message: "Internal server error", error: err });
   }
 };
